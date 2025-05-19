@@ -1,0 +1,80 @@
+# ItemsLore 插件配置文件
+# 插件版本：1.0.0
+
+# 需要添加lore的物品类型
+# 可选值：
+# ALL - 所有物品
+# DAMAGEABLE - 所有可损坏的物品
+# TOOL - 所有工具（镐、斧、铲、锄等）
+# ARMOR - 所有盔甲（头盔、胸甲、护腿、靴子、鞘翅、盾牌）
+# WEAPON - 所有武器（剑、弓、弩、三叉戟）
+# 或者指定特定的材料类型，如 DIAMOND_SWORD、NETHERITE_PICKAXE 等
+item-types:
+  - "DAMAGEABLE"
+  - "TOOL"
+  - "ARMOR"
+  - "WEAPON"
+
+# Lore 配置
+lore:
+  # 是否显示耐久度
+  show-durability: true
+  # 耐久度前缀
+  durability-prefix: "&7耐久度："
+  # 耐久度格式
+  durability-format: "&7耐久度：&f%current%/%max%"
+  
+  # 是否显示获取时间
+  show-time: true
+  # 时间格式
+  time-format: "yyyy-MM-dd HH:mm:ss"
+  # 时间前缀
+  time-prefix: "&7获取时间：&f%time%"
+  
+  # 是否显示获取人
+  show-player: true
+  # 获取人前缀
+  player-prefix: "&7获取人：&f%player%"
+  
+  # 是否显示来源
+  show-source: true
+  # 来源前缀
+  source-prefix: "&7来源：&f%source%"
+  
+  # 自定义额外lore
+  custom-lore:
+    enabled: true
+    # 自定义lore列表，支持PlaceholderAPI变量和颜色代码
+    lines:
+      - "&6物品ID：&f%material_name%"
+      - "&6服务器：&f%server_name%"
+      
+      # 多世界插件变量示例 (Multiverse-Core)
+      - "&6世界名称：&f%mv_worldname%"
+      - "&6世界别名：&f%mv_worldalias%"
+      - "&6世界环境：&f%mv_worldenv%"
+      
+      # 多世界插件变量示例 (MultiWorld，如果安装了MultiWorld插件)
+      # - "&6世界名称：&f%mw_worldname%"
+      # - "&6世界别名：&f%mw_worldalias%"
+      
+      # PlaceholderAPI 变量示例 (需要安装对应的扩展)
+      #- "&a等级：&f%player_level%"
+      - "&a血量：&f%player_health%/%player_max_health%"
+      - "&a位置：&f%player_x%, %player_y%, %player_z%"
+      
+      # Vault 变量示例 (需要安装Vault)
+      - "&e余额：&f%vault_balance%"
+      
+      # MMOItems 变量示例 (需要安装MMOItems)
+      # - "&d物品类型：&f%mmoitems_type%"
+      # - "&d物品等级：&f%mmoitems_item_level%"
+      
+      # ItemsAdder 变量示例 (需要安装ItemsAdder)
+      # - "&3自定义ID：&f%itemsadder_namespace%"
+      
+      # MythicMobs 变量示例 (需要安装MythicMobs)
+      # - "&5神话物品：&f%mythicmobs_item_id%"
+      
+      # 添加更多自定义lore行，每行一个
+      # - "&6示例：&f这是一个示例lore" 

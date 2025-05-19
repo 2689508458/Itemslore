@@ -1,0 +1,22 @@
+name: Itemslore
+version: '1.0-SNAPSHOT'
+main: org.Itemslore.itemslore.Itemslore
+api-version: '1.21'
+description: '为物品自动添加耐久度、获取时间等Lore信息'
+author: YourName
+softdepend: [PlaceholderAPI, Vault, MMOItems, ItemsAdder, MythicMobs, Multiverse-Core, MultiWorld]
+
+commands:
+  itemslore:
+    description: ItemsLore插件主命令
+    usage: /itemslore [reload|help]
+    aliases: [ilore]
+    permission: itemslore.use
+
+permissions:
+  itemslore.use:
+    description: 允许使用插件的基本命令
+    default: true
+  itemslore.reload:
+    description: 允许重新加载插件配置
+    default: op
