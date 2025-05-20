@@ -6,7 +6,7 @@
 
     <groupId>org.Itemslore</groupId>
     <artifactId>itemslore</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
     <name>itemslore</name>
