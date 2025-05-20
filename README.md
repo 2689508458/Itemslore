@@ -30,7 +30,7 @@ ItemsLore是一款功能强大的Minecraft Bukkit/Spigot服务器插件，可以
 
 ## 📋 安装方法
 
-1. 从[发布页面](https://github.com/YourUsername/Itemslore/releases)下载最新版本的插件JAR文件
+1. 从[发布页面](https://github.com/2689508458/Itemslore/releases)下载最新版本的插件JAR文件
 2. 将下载的JAR文件放入服务器的`plugins`文件夹中
 3. 重启服务器或使用插件管理器加载插件
 4. 插件将自动创建配置文件，您可以根据需要进行自定义
@@ -149,12 +149,13 @@ random-lore:
 
 ## 📝 更新日志
 
-### 版本 1.1.0
+### 版本 1.2.0
 - 添加唯一性Lore支持
 - 优化随机Lore的变量处理
 - 改进权重系统，使Lore随机更加合理
 - 为随机Lore添加类型识别，避免同类型重复
-
+- 优化随机lore数量算法逻辑
+- 
 ### 版本 1.0.0
 - 初始版本发布
 - 添加基本物品信息功能
@@ -165,7 +166,7 @@ random-lore:
 
 如果您在使用过程中遇到任何问题，可以通过以下方式联系我们：
 
-- 在GitHub上提交[Issue](https://github.com/YourUsername/Itemslore/issues)
+- 在GitHub上提交[Issue](https://github.com/2689508458/Itemslore/issues)
 - 加入我们的QQ群: 123456789
 
 ## 📜 许可证
