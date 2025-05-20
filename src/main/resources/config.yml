@@ -33,24 +33,24 @@ lore:
   # 是否显示耐久度
   show-durability: true
   # 耐久度格式
-  durability-format: "&8❖ &7耐久: &c%current_low%&e%current_medium%&a%current_high%&8/&f%max%"
+  durability-format: "&8❖ &7耐久: &c%ilore_current_low%&e%ilore_current_medium%&a%ilore_current_high%&8/&f%ilore_max%"
   
   # 是否显示获取时间
   show-time: true
   # 时间格式
   time-format: "yyyy-MM-dd HH:mm"
   # 时间前缀
-  time-prefix: "&8◈ &7获取时间: &f%time%"
+  time-prefix: "&8◈ &7获取时间: &f%ilore_time%"
   
   # 是否显示获取人
   show-player: true
   # 获取人前缀
-  player-prefix: "&8✦ &7获取者: &f%player%"
+  player-prefix: "&8✦ &7获取者: &f%ilore_player%"
   
   # 是否显示来源
   show-source: true
   # 来源前缀
-  source-prefix: "&8✧ &7来源: &f%source%"
+  source-prefix: "&8✧ &7来源: &f%ilore_source%"
   
   # 自定义lore模板
   templates:
@@ -62,19 +62,19 @@ lore:
       item-types: []
       # 模板内容
       content:
-        - "%top_separator%"
+        - "%ilore_top_separator%"
         - ""
-        - "%durability%"
+        - "%ilore_durability%"
         - ""
-        - "%random_lore%"
+        - "%ilore_random_lore%"
         - ""
-        - "%info_separator%"
+        - "%ilore_info_separator%"
         - ""
-        - "%time%"
-        - "%player%"
-        - "%source%"
+        - "%ilore_time%"
+        - "%ilore_player%"
+        - "%ilore_source%"
         - ""
-        - "%bottom_separator%"
+        - "%ilore_bottom_separator%"
     
     # 武器专用模板
     weapon:
@@ -85,21 +85,21 @@ lore:
         - "CROSSBOW"
         - "TRIDENT"
       content:
-        - "%top_separator%"
+        - "%ilore_top_separator%"
         - ""
         - "&c&l⚔ 武器属性"
-        - "%durability%"
+        - "%ilore_durability%"
         - ""
         - "&8[ &c随机武器特性 &8]"
-        - "%random_lore%"
+        - "%ilore_random_lore%"
         - ""
-        - "%info_separator%"
+        - "%ilore_info_separator%"
         - ""
-        - "%time%"
-        - "%player%"
-        - "%source%"
+        - "%ilore_time%"
+        - "%ilore_player%"
+        - "%ilore_source%"
         - ""
-        - "%bottom_separator%"
+        - "%ilore_bottom_separator%"
     
     # 工具专用模板
     tool:
@@ -110,21 +110,21 @@ lore:
         - "SHOVEL"
         - "HOE"
       content:
-        - "%top_separator%"
+        - "%ilore_top_separator%"
         - ""
         - "&a&l⛏ 工具属性"
-        - "%durability%"
+        - "%ilore_durability%"
         - ""
         - "&8[ &a随机工具特性 &8]"
-        - "%random_lore%"
+        - "%ilore_random_lore%"
         - ""
-        - "%info_separator%"
+        - "%ilore_info_separator%"
         - ""
-        - "%time%"
-        - "%player%"
-        - "%source%"
+        - "%ilore_time%"
+        - "%ilore_player%"
+        - "%ilore_source%"
         - ""
-        - "%bottom_separator%"
+        - "%ilore_bottom_separator%"
     
     # 盔甲专用模板
     armor:
@@ -137,21 +137,21 @@ lore:
         - "ELYTRA"
         - "SHIELD"
       content:
-        - "%top_separator%"
+        - "%ilore_top_separator%"
         - ""
         - "&b&l🛡 护甲属性"
-        - "%durability%"
+        - "%ilore_durability%"
         - ""
         - "&8[ &b随机护甲特性 &8]"
-        - "%random_lore%"
+        - "%ilore_random_lore%"
         - ""
-        - "%info_separator%"
+        - "%ilore_info_separator%"
         - ""
-        - "%time%"
-        - "%player%"
-        - "%source%"
+        - "%ilore_time%"
+        - "%ilore_player%"
+        - "%ilore_source%"
         - ""
-        - "%bottom_separator%"
+        - "%ilore_bottom_separator%"
   
   # 随机Lore配置
   random-lore:

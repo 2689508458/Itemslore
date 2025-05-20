@@ -105,25 +105,25 @@ public class LoreManager {
             String processedLine = line;
             
             // 处理顶部分隔线
-            if (processedLine.contains("%top_separator%")) {
-                String separator = plugin.getConfig().getString("lore.basic-settings.top-separator", "&8&m                         ");
-                processedLine = processedLine.replace("%top_separator%", separator);
+            if (processedLine.contains("%ilore_top_separator%")) {
+                String separator = plugin.getConfig().getString("lore.basic-settings.top-separator", "&8&m⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤");
+                processedLine = processedLine.replace("%ilore_top_separator%", separator);
             }
             
             // 处理底部分隔线
-            if (processedLine.contains("%bottom_separator%")) {
-                String separator = plugin.getConfig().getString("lore.basic-settings.bottom-separator", "&8&m                         ");
-                processedLine = processedLine.replace("%bottom_separator%", separator);
+            if (processedLine.contains("%ilore_bottom_separator%")) {
+                String separator = plugin.getConfig().getString("lore.basic-settings.bottom-separator", "&8&m⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤");
+                processedLine = processedLine.replace("%ilore_bottom_separator%", separator);
             }
             
             // 处理信息分隔线
-            if (processedLine.contains("%info_separator%")) {
+            if (processedLine.contains("%ilore_info_separator%")) {
                 String separator = plugin.getConfig().getString("lore.basic-settings.info-separator", "&8&m· · · · · · · · · · · · · · · · · · · ·");
-                processedLine = processedLine.replace("%info_separator%", separator);
+                processedLine = processedLine.replace("%ilore_info_separator%", separator);
             }
             
             // 处理耐久度
-            if (processedLine.contains("%durability%") && item.getItemMeta() instanceof Damageable) {
+            if (processedLine.contains("%ilore_durability%") && item.getItemMeta() instanceof Damageable) {
                 Damageable damageable = (Damageable) item.getItemMeta();
                 int maxDurability = item.getType().getMaxDurability();
                 int currentDurability = maxDurability - damageable.getDamage();
@@ -131,7 +131,7 @@ public class LoreManager {
                 // 计算耐久度百分比
                 int durabilityPercentage = (maxDurability > 0) ? (currentDurability * 100 / maxDurability) : 100;
                 
-                String durabilityText = plugin.getConfig().getString("lore.durability-format", "&8❖ &7耐久: &c%current_low%&e%current_medium%&a%current_high%&8/&f%max%");
+                String durabilityText = plugin.getConfig().getString("lore.durability-format", "&8❖ &7耐久: &c%ilore_current_low%&e%ilore_current_medium%&a%ilore_current_high%&8/&f%ilore_max%");
                 
                 // 根据耐久度百分比处理不同颜色段
                 String currentLow = "";
@@ -147,54 +147,54 @@ public class LoreManager {
                 }
                 
                 durabilityText = durabilityText
-                        .replace("%current_low%", currentLow)
-                        .replace("%current_medium%", currentMedium)
-                        .replace("%current_high%", currentHigh)
-                        .replace("%max%", String.valueOf(maxDurability));
+                        .replace("%ilore_current_low%", currentLow)
+                        .replace("%ilore_current_medium%", currentMedium)
+                        .replace("%ilore_current_high%", currentHigh)
+                        .replace("%ilore_max%", String.valueOf(maxDurability));
                 
-                processedLine = processedLine.replace("%durability%", durabilityText);
-            } else if (processedLine.contains("%durability%")) {
+                processedLine = processedLine.replace("%ilore_durability%", durabilityText);
+            } else if (processedLine.contains("%ilore_durability%")) {
                 // 如果物品没有耐久度，则删除该行
                 continue;
             }
             
             // 处理获取时间
-            if (processedLine.contains("%time%") && plugin.getConfig().getBoolean("lore.show-time", true)) {
+            if (processedLine.contains("%ilore_time%") && plugin.getConfig().getBoolean("lore.show-time", true)) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat(
                         plugin.getConfig().getString("lore.time-format", "yyyy-MM-dd HH:mm:ss"));
-                String timeText = plugin.getConfig().getString("lore.time-prefix", "&7获取时间：&f%time%");
-                timeText = timeText.replace("%time%", dateFormat.format(new Date()));
+                String timeText = plugin.getConfig().getString("lore.time-prefix", "&7获取时间：&f%ilore_time%");
+                timeText = timeText.replace("%ilore_time%", dateFormat.format(new Date()));
                 
-                processedLine = processedLine.replace("%time%", timeText);
-            } else if (processedLine.contains("%time%")) {
+                processedLine = processedLine.replace("%ilore_time%", timeText);
+            } else if (processedLine.contains("%ilore_time%")) {
                 // 如果不显示时间，则删除该行
                 continue;
             }
             
             // 处理玩家名称
-            if (processedLine.contains("%player%") && plugin.getConfig().getBoolean("lore.show-player", true)) {
-                String playerText = plugin.getConfig().getString("lore.player-prefix", "&7获取人：&f%player%");
-                playerText = playerText.replace("%player%", player.getName());
+            if (processedLine.contains("%ilore_player%") && plugin.getConfig().getBoolean("lore.show-player", true)) {
+                String playerText = plugin.getConfig().getString("lore.player-prefix", "&7获取人：&f%ilore_player%");
+                playerText = playerText.replace("%ilore_player%", player.getName());
                 
-                processedLine = processedLine.replace("%player%", playerText);
-            } else if (processedLine.contains("%player%")) {
+                processedLine = processedLine.replace("%ilore_player%", playerText);
+            } else if (processedLine.contains("%ilore_player%")) {
                 // 如果不显示玩家，则删除该行
                 continue;
             }
             
             // 处理来源
-            if (processedLine.contains("%source%") && plugin.getConfig().getBoolean("lore.show-source", true)) {
-                String sourceText = plugin.getConfig().getString("lore.source-prefix", "&7来源：&f%source%");
-                sourceText = sourceText.replace("%source%", source);
+            if (processedLine.contains("%ilore_source%") && plugin.getConfig().getBoolean("lore.show-source", true)) {
+                String sourceText = plugin.getConfig().getString("lore.source-prefix", "&7来源：&f%ilore_source%");
+                sourceText = sourceText.replace("%ilore_source%", source);
                 
-                processedLine = processedLine.replace("%source%", sourceText);
-            } else if (processedLine.contains("%source%")) {
+                processedLine = processedLine.replace("%ilore_source%", sourceText);
+            } else if (processedLine.contains("%ilore_source%")) {
                 // 如果不显示来源，则删除该行
                 continue;
             }
             
             // 处理随机lore
-            if (processedLine.contains("%random_lore%")) {
+            if (processedLine.contains("%ilore_random_lore%")) {
                 if (plugin.getConfig().getBoolean("lore.random-lore.enabled", false)) {
                     // 添加随机lore
                     List<String> randomLores = getRandomLores(item, player);
@@ -206,7 +206,7 @@ public class LoreManager {
                     
                     // 将所有随机lore添加到列表中，先添加当前行的替代，后续lore单独添加
                     if (!randomLores.isEmpty()) {
-                        lore.add(colorManager.colorize(processedLine.replace("%random_lore%", randomLores.get(0))));
+                        lore.add(colorManager.colorize(processedLine.replace("%ilore_random_lore%", randomLores.get(0))));
                         // 添加剩余的随机lore
                         for (int i = 1; i < randomLores.size(); i++) {
                             lore.add(colorManager.colorize(randomLores.get(i)));
@@ -312,7 +312,7 @@ public class LoreManager {
             int durabilityPercentage = (maxDurability > 0) ? (currentDurability * 100 / maxDurability) : 100;
             
             // 处理耐久度显示
-            String durabilityText = plugin.getConfig().getString("lore.durability-format", "&8❖ &7耐久: &c%current_low%&e%current_medium%&a%current_high%&8/&f%max%");
+            String durabilityText = plugin.getConfig().getString("lore.durability-format", "&8❖ &7耐久: &c%ilore_current_low%&e%ilore_current_medium%&a%ilore_current_high%&8/&f%ilore_max%");
                 
             // 根据耐久度百分比处理不同颜色段
             String currentLow = "";
@@ -328,10 +328,10 @@ public class LoreManager {
             }
             
             durabilityText = durabilityText
-                    .replace("%current_low%", currentLow)
-                    .replace("%current_medium%", currentMedium)
-                    .replace("%current_high%", currentHigh)
-                    .replace("%max%", String.valueOf(maxDurability));
+                    .replace("%ilore_current_low%", currentLow)
+                    .replace("%ilore_current_medium%", currentMedium)
+                    .replace("%ilore_current_high%", currentHigh)
+                    .replace("%ilore_max%", String.valueOf(maxDurability));
             
             durabilityText = colorManager.colorize(durabilityText);
             
@@ -358,27 +358,27 @@ public class LoreManager {
         if (showTime) {
             SimpleDateFormat dateFormat = new SimpleDateFormat(
                     plugin.getConfig().getString("lore.time-format", "yyyy-MM-dd HH:mm:ss"));
-            String timeText = plugin.getConfig().getString("lore.time-prefix", "&7获取时间：&f%time%");
+            String timeText = plugin.getConfig().getString("lore.time-prefix", "&7获取时间：&f%ilore_time%");
             timeText = colorManager.colorize(timeText
-                    .replace("%time%", dateFormat.format(new Date())));
+                    .replace("%ilore_time%", dateFormat.format(new Date())));
             
             lore.add(timeText);
         }
         
         // 添加玩家名称
         if (showPlayer) {
-            String playerText = plugin.getConfig().getString("lore.player-prefix", "&7获取人：&f%player%");
+            String playerText = plugin.getConfig().getString("lore.player-prefix", "&7获取人：&f%ilore_player%");
             playerText = colorManager.colorize(playerText
-                    .replace("%player%", player.getName()));
+                    .replace("%ilore_player%", player.getName()));
             
             lore.add(playerText);
         }
         
         // 添加来源
         if (showSource) {
-            String sourceText = plugin.getConfig().getString("lore.source-prefix", "&7来源：&f%source%");
+            String sourceText = plugin.getConfig().getString("lore.source-prefix", "&7来源：&f%ilore_source%");
             sourceText = colorManager.colorize(sourceText
-                    .replace("%source%", source));
+                    .replace("%ilore_source%", source));
             
             lore.add(sourceText);
         }
@@ -470,8 +470,8 @@ public class LoreManager {
                 String randomLore = availableLores.get(i);
                 
                 // 处理变量
-                randomLore = randomLore.replace("%player_name%", player.getName())
-                        .replace("%material_name%", item.getType().toString());
+                randomLore = randomLore.replace("%ilore_player_name%", player.getName())
+                        .replace("%ilore_material_name%", item.getType().toString());
                 
                 // 处理所有插件变量
                 randomLore = variableProcessor.parseAllVariables(randomLore, player, item);

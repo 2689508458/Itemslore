@@ -25,6 +25,10 @@ public class CommandTabCompleter implements TabCompleter {
             "reload", "clear", "random", "help", "template"
     );
     
+    private final List<String> TEMPLATE_COMMANDS = Arrays.asList(
+            "list", "info", "apply"
+    );
+    
     public CommandTabCompleter(Itemslore plugin, ColorManager colorManager) {
         this.plugin = plugin;
         this.colorManager = colorManager;
@@ -43,6 +47,17 @@ public class CommandTabCompleter implements TabCompleter {
             // 子命令参数补全
             switch (args[0].toLowerCase()) {
                 case "template":
+                    // 补全template子命令
+                    StringUtil.copyPartialMatches(args[1], TEMPLATE_COMMANDS, completions);
+                    Collections.sort(completions);
+                    return completions;
+                default:
+                    return Collections.emptyList();
+            }
+        } else if (args.length == 3) {
+            // 第三级参数补全
+            if ("template".equalsIgnoreCase(args[0])) {
+                if ("info".equalsIgnoreCase(args[1]) || "apply".equalsIgnoreCase(args[1])) {
                     // 获取所有模板名
                     List<String> templates = new ArrayList<>();
                     
@@ -52,12 +67,10 @@ public class CommandTabCompleter implements TabCompleter {
                         templatesSection.getKeys(false).forEach(templates::add);
                     }
                     
-                    StringUtil.copyPartialMatches(args[1], templates, completions);
+                    StringUtil.copyPartialMatches(args[2], templates, completions);
                     Collections.sort(completions);
                     return completions;
-                    
-                default:
-                    return Collections.emptyList();
+                }
             }
         }
         
