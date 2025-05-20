@@ -63,7 +63,7 @@ lore:
       enabled: true
       # 适用的物品类型，留空表示所有类型
       item-types: []
-      # 模板内容
+      # 模板内容  lore内容可以自行修改 支持ap sx属性
       content:
         - "%ilore_top_separator%"
         - ""
