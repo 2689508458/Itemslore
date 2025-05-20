@@ -2,7 +2,6 @@ package org.Itemslore.itemslore.managers;
 
 import org.Itemslore.itemslore.Itemslore;
 import org.Itemslore.itemslore.utils.ColorManager;
-import org.Itemslore.itemslore.utils.ItemDataManager;
 import org.Itemslore.itemslore.utils.VariableProcessor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -24,14 +23,12 @@ public class LoreManager {
     private final Itemslore plugin;
     private final ColorManager colorManager;
     private final VariableProcessor variableProcessor;
-    private final ItemDataManager itemDataManager;
     private final Random random = new Random();
     
-    public LoreManager(Itemslore plugin, ColorManager colorManager, VariableProcessor variableProcessor, ItemDataManager itemDataManager) {
+    public LoreManager(Itemslore plugin, ColorManager colorManager, VariableProcessor variableProcessor) {
         this.plugin = plugin;
         this.colorManager = colorManager;
         this.variableProcessor = variableProcessor;
-        this.itemDataManager = itemDataManager;
     }
     
     /**
@@ -190,36 +187,6 @@ public class LoreManager {
                 processedLine = processedLine.replace("%ilore_source%", sourceText);
             } else if (processedLine.contains("%ilore_source%")) {
                 // 如果不显示来源，则删除该行
-                continue;
-            }
-            
-            // 处理怪物击杀数
-            if (processedLine.contains("%ilore_mob_kills%") && 
-                plugin.getConfig().getBoolean("lore.kill-stats.enabled", true) &&
-                plugin.getConfig().getBoolean("lore.kill-stats.show-mob-kills", true)) {
-                
-                int mobKills = itemDataManager.getMobKills(item);
-                String killsText = plugin.getConfig().getString("lore.kill-stats.mob-kills-prefix", "&8⚔ &7击杀怪物: &f%ilore_mob_kills%");
-                killsText = killsText.replace("%ilore_mob_kills%", String.valueOf(mobKills));
-                
-                processedLine = processedLine.replace("%ilore_mob_kills%", killsText);
-            } else if (processedLine.contains("%ilore_mob_kills%")) {
-                // 如果不显示怪物击杀数，则删除该行
-                continue;
-            }
-            
-            // 处理玩家击杀数
-            if (processedLine.contains("%ilore_player_kills%") && 
-                plugin.getConfig().getBoolean("lore.kill-stats.enabled", true) &&
-                plugin.getConfig().getBoolean("lore.kill-stats.show-player-kills", true)) {
-                
-                int playerKills = itemDataManager.getPlayerKills(item);
-                String killsText = plugin.getConfig().getString("lore.kill-stats.player-kills-prefix", "&8☠ &7击杀玩家: &f%ilore_player_kills%");
-                killsText = killsText.replace("%ilore_player_kills%", String.valueOf(playerKills));
-                
-                processedLine = processedLine.replace("%ilore_player_kills%", killsText);
-            } else if (processedLine.contains("%ilore_player_kills%")) {
-                // 如果不显示玩家击杀数，则删除该行
                 continue;
             }
             
@@ -412,30 +379,6 @@ public class LoreManager {
                     .replace("%ilore_source%", source));
             
             lore.add(sourceText);
-        }
-        
-        // 添加击杀统计
-        boolean showKillStats = plugin.getConfig().getBoolean("lore.kill-stats.enabled", true);
-        if (showKillStats) {
-            // 怪物击杀数
-            if (plugin.getConfig().getBoolean("lore.kill-stats.show-mob-kills", true)) {
-                int mobKills = itemDataManager.getMobKills(item);
-                String killsText = plugin.getConfig().getString("lore.kill-stats.mob-kills-prefix", "&8⚔ &7击杀怪物: &f%ilore_mob_kills%");
-                killsText = colorManager.colorize(killsText
-                        .replace("%ilore_mob_kills%", String.valueOf(mobKills)));
-                
-                lore.add(killsText);
-            }
-            
-            // 玩家击杀数
-            if (plugin.getConfig().getBoolean("lore.kill-stats.show-player-kills", true)) {
-                int playerKills = itemDataManager.getPlayerKills(item);
-                String killsText = plugin.getConfig().getString("lore.kill-stats.player-kills-prefix", "&8☠ &7击杀玩家: &f%ilore_player_kills%");
-                killsText = colorManager.colorize(killsText
-                        .replace("%ilore_player_kills%", String.valueOf(playerKills)));
-                
-                lore.add(killsText);
-            }
         }
         
         // 添加底部分割线

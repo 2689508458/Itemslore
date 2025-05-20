@@ -1,5 +1,8 @@
 # ItemsLore 插件配置文件
-# 插件版本：1.0.0
+# 插件版本：1.2.0
+
+# 是否启用调试模式，开启后会在控制台输出更多信息
+debug: false
 
 # 需要添加lore的物品类型
 # 可选值：
@@ -52,21 +55,6 @@ lore:
   # 来源前缀
   source-prefix: "&8✧ &7来源: &f%ilore_source%"
   
-  # 击杀统计设置
-  kill-stats:
-    # 是否启用击杀统计
-    enabled: true
-    # 是否显示怪物击杀数
-    show-mob-kills: true
-    # 怪物击杀数前缀
-    mob-kills-prefix: "&8⚔ &7击杀怪物: &f%ilore_mob_kills%"
-    # 是否显示玩家击杀数
-    show-player-kills: true
-    # 玩家击杀数前缀
-    player-kills-prefix: "&8☠ &7击杀玩家: &f%ilore_player_kills%"
-    # 击杀后是否自动更新Lore
-    auto-update-lore: true
-  
   # 自定义lore模板
   templates:
     # 可以添加多个模板
@@ -88,8 +76,6 @@ lore:
         - "%ilore_time%"
         - "%ilore_player%"
         - "%ilore_source%"
-        - "%ilore_mob_kills%"
-        - "%ilore_player_kills%"
         - ""
         - "%ilore_bottom_separator%"
     

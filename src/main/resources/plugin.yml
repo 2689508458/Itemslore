@@ -1,5 +1,5 @@
 name: Itemslore
-version: '1.0-SNAPSHOT'
+version: '1.2.0'
 main: org.Itemslore.itemslore.Itemslore
 api-version: '1.21'
 description: '为物品自动添加耐久度、获取时间等Lore信息'
