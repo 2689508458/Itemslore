@@ -612,11 +612,14 @@ public class LoreManager {
             }
         }
         
-        // 先添加不计入随机数量的固定Lore
+        // 先添加不计入随机数量的固定Lore (这些总是会出现)
         randomLores.addAll(fixedLores);
         
-        // 如果没有可用的随机Lore池且没有计入数量的固定Lore，返回固定Lore列表
+        // 如果没有可用的随机选择对象，直接返回
         if (randomLorePool.isEmpty() && countedFixedLores.isEmpty()) {
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                plugin.getLogger().info("没有可用的随机Lore池和计入数量的固定Lore，只返回固定Lore: " + fixedLores.size() + "个");
+            }
             return randomLores;
         }
         
@@ -627,15 +630,41 @@ public class LoreManager {
         // 确保最小值不大于最大值
         minAmount = Math.min(minAmount, maxAmount);
         
-        // 计算应该生成的随机Lore数量
-        int targetAmount = (minAmount >= maxAmount) ? minAmount : (random.nextInt(maxAmount - minAmount + 1) + minAmount);
+        // 如果固定Lore已经超过或等于最大数量，且计入随机数量，则不需要再选择随机Lore
+        if (countedFixedLores.size() >= maxAmount && fixedCountAsRandom) {
+            // 记录日志
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                plugin.getLogger().info("固定Lore数量(" + countedFixedLores.size() + 
+                                      ")已达到或超过最大随机数量(" + maxAmount + ")，不再生成随机Lore");
+            }
+            return randomLores;
+        }
         
-        // 如果有计入数量的固定Lore，调整目标数量
-        int adjustedTarget = targetAmount - countedFixedLores.size();
-        adjustedTarget = Math.max(0, adjustedTarget); // 确保不会为负数
+        // 计算实际可用的最小和最大数量（考虑已有的固定Lore）
+        int effectiveMin = fixedCountAsRandom ? Math.max(0, minAmount - countedFixedLores.size()) : minAmount;
+        int effectiveMax = fixedCountAsRandom ? Math.max(0, maxAmount - countedFixedLores.size()) : maxAmount;
+        
+        // 确保有效最小值不超过有效最大值
+        effectiveMin = Math.min(effectiveMin, effectiveMax);
+        
+        // 计算应该生成的随机Lore数量
+        int targetAmount = (effectiveMin >= effectiveMax) ? 
+                           effectiveMin : 
+                           (random.nextInt(effectiveMax - effectiveMin + 1) + effectiveMin);
+        
+        // 记录原始目标数量
+        int originalTarget = targetAmount;
         
         // 限制目标数量不超过可用的随机Lore池大小
-        adjustedTarget = Math.min(adjustedTarget, randomLorePool.size());
+        targetAmount = Math.min(targetAmount, randomLorePool.size());
+        
+        // 记录日志
+        if (plugin.getConfig().getBoolean("debug", false)) {
+            plugin.getLogger().info("随机Lore目标数量: " + originalTarget + 
+                                  " (调整后: " + targetAmount + 
+                                  ", 固定计数: " + countedFixedLores.size() + 
+                                  ", 池大小: " + randomLorePool.size() + ")");
+        }
         
         // 跟踪已选择的唯一Lore的类型
         List<String> selectedUniqueTypes = new ArrayList<>();
@@ -645,8 +674,8 @@ public class LoreManager {
         int maxAttempts = randomLorePool.size() * 2;
         int attempts = 0;
         
-        // 随机选择Lore，直到达到调整后的目标数量或尝试次数用完
-        while (selectedLores.size() < adjustedTarget && attempts < maxAttempts && !randomLorePool.isEmpty()) {
+        // 随机选择Lore，直到达到目标数量或尝试次数用完
+        while (selectedLores.size() < targetAmount && attempts < maxAttempts && !randomLorePool.isEmpty()) {
             attempts++;
             
             // 根据权重随机选择
@@ -695,7 +724,12 @@ public class LoreManager {
                 // 唯一性Lore计数特殊处理
                 if (!uniqueCountAsRandom) {
                     // 如果唯一性Lore不计入随机数量，则增加目标数量
-                    adjustedTarget++;
+                    targetAmount++;
+                    
+                    // 记录日志
+                    if (plugin.getConfig().getBoolean("debug", false)) {
+                        plugin.getLogger().info("发现唯一性Lore[" + uniqueCategory + "]不计入数量，增加目标数量至: " + targetAmount);
+                    }
                 }
                 
                 // 记录日志，便于调试
@@ -728,12 +762,54 @@ public class LoreManager {
         // 再添加所有选定的随机Lore
         randomLores.addAll(selectedLores);
         
-        // 记录日志，便于调试
+        // 确保满足最小数量要求（如果配置了不计入随机数量的选项可能导致数量不足）
+        int totalRandomCount = countedFixedLores.size() + selectedLores.size();
+        int originalMin = plugin.getConfig().getInt("lore.random-lore.amount.min", 1);
+        
+        if (totalRandomCount < originalMin && randomLorePool.size() > selectedLores.size()) {
+            // 记录警告
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                plugin.getLogger().warning("随机Lore数量(" + totalRandomCount + ")未达到最小值(" + originalMin + 
+                                         ")，尝试添加更多Lore...");
+            }
+            
+            // 尝试添加更多随机Lore以满足最小要求
+            int needed = originalMin - totalRandomCount;
+            for (int i = 0; i < Math.min(needed, randomLorePool.size()); i++) {
+                if (!randomLorePool.isEmpty()) {
+                    // 简单添加第一个可用的Lore
+                    List<Object> entry = randomLorePool.remove(0);
+                    String loreText = String.valueOf(entry.get(0));
+                    double weight = (Double) entry.get(1);
+                    
+                    // 处理变量和颜色
+                    String processedLore = variableProcessor.parseAllVariables(loreText, player, item);
+                    String coloredLore = colorManager.colorize(processedLore);
+                    
+                    randomLores.add(coloredLore);
+                }
+            }
+        }
+        
+        // 记录最终日志，便于调试
         if (plugin.getConfig().getBoolean("debug", false)) {
-            plugin.getLogger().info("生成的随机Lore总数: " + randomLores.size() + 
-                                    " (固定不计数: " + fixedLores.size() + 
-                                    ", 固定计数: " + countedFixedLores.size() + 
-                                    ", 随机: " + selectedLores.size() + ")");
+            plugin.getLogger().info("最终生成Lore统计:");
+            plugin.getLogger().info("- 固定Lore(不计数): " + fixedLores.size() + "个");
+            plugin.getLogger().info("- 固定Lore(计数): " + countedFixedLores.size() + "个");
+            plugin.getLogger().info("- 随机选择Lore: " + selectedLores.size() + "个");
+            plugin.getLogger().info("- 总计Lore数量: " + randomLores.size() + "个");
+            
+            if (fixedCountAsRandom) {
+                plugin.getLogger().info("- 固定Lore计入随机数量: 是");
+            } else {
+                plugin.getLogger().info("- 固定Lore计入随机数量: 否");
+            }
+            
+            if (uniqueCountAsRandom) {
+                plugin.getLogger().info("- 唯一Lore计入随机数量: 是");
+            } else {
+                plugin.getLogger().info("- 唯一Lore计入随机数量: 否");
+            }
         }
         
         return randomLores;
