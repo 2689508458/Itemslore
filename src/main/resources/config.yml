@@ -15,142 +15,66 @@ item-types:
   - "ARMOR"
   - "WEAPON"
 
-# 颜色配置
-colors:
-  # 预设颜色模板，可在lore中使用 %color_模板名% 来应用
-  templates:
-    # 渐变颜色模板 (从一个颜色到另一个颜色)
-    gradients:
-      # 火焰渐变效果 (红色到黄色)
-      fire: "&c&l%text%→&6&l%text%"
-      # 水渐变效果 (浅蓝到深蓝)
-      water: "&b&l%text%→&9&l%text%"
-      # 自然渐变效果 (黄色到绿色)
-      nature: "&e&l%text%→&a&l%text%"
-      # 魔法渐变效果 (紫色到粉色)
-      magic: "&5&l%text%→&d&l%text%"
-      # 阴暗渐变效果 (灰色到黑色)
-      shadow: "&7&l%text%→&8&l%text%"
-    
-    # 单色样式模板
-    styles:
-      title: "&6&l&n%text%&r"
-      subtitle: "&e&l%text%&r"
-      rare: "&b&o%text%&r"
-      epic: "&5&l%text%&r"
-      legendary: "&6&l%text%&r"
-      common: "&7%text%&r"
-      warning: "&c&l%text%&r"
-  
-  # 动态颜色支持
-  dynamic:
-    # 耐久度颜色 - 根据物品耐久度百分比变化颜色
-    durability:
-      enabled: true
-      # 不同耐久度百分比对应的颜色
-      ranges:
-        # 0-20% 红色
-        0-20: "&c"
-        # 21-50% 黄色
-        21-50: "&e"
-        # 51-80% 浅绿色
-        51-80: "&a"
-        # 81-100% 绿色
-        81-100: "&2"
-
 # Lore 配置
 lore:
   # 是否显示耐久度
   show-durability: true
-  # 耐久度格式 - 使用 %durability_color% 为动态颜色
-  durability-format: "&8❖ &7耐久: %durability_color%%current%&8/&f%max%"
+  # 耐久度前缀
+  durability-prefix: "&7耐久度："
+  # 耐久度格式
+  durability-format: "&7耐久度：&f%current%/%max%"
   
   # 是否显示获取时间
   show-time: true
   # 时间格式
-  time-format: "yyyy-MM-dd HH:mm"
+  time-format: "yyyy-MM-dd HH:mm:ss"
   # 时间前缀
-  time-prefix: "&8◈ &7获取时间: &f%time%"
+  time-prefix: "&7获取时间：&f%time%"
   
   # 是否显示获取人
   show-player: true
   # 获取人前缀
-  player-prefix: "&8✦ &7获取者: &f%player%"
+  player-prefix: "&7获取人：&f%player%"
   
   # 是否显示来源
   show-source: true
   # 来源前缀
-  source-prefix: "&8✧ &7来源: &f%source%"
-  
-  # 随机Lore配置
-  random-lore:
-    enabled: false
-    # 每个物品获得的随机lore数量，范围1-3表示随机获得1到3条
-    amount: 1
-    # 是否在固定lore之后显示随机lore
-    show-after-fixed: true
-    # 每个物品类型对应的随机lore池
-    pools:
-      # 所有物品都可能获得的随机lore
-      ALL:
-        - "&8✧ %color_subtitle%神秘:&r &f此物品散发着奇异的光芒"
-        - "&8✧ %color_subtitle%品质:&r &f制作工艺精良"
-        - "&8✧ %color_subtitle%特性:&r &f质地坚固耐用"
-        - "&8✧ %color_subtitle%来历:&r &f据说源自远古文明"
-      
-      # 武器类专属的随机lore
-      WEAPON:
-        - "&8⚔ %color_fire%锋利:&r &f锋利无比，可轻易切断钢铁"
-        - "&8⚔ %color_fire%杀伤:&r &f曾经斩杀过无数强敌"
-        - "&8⚔ %color_fire%威力:&r &f挥舞时发出刺耳的破空声"
-        - "&8⚔ %color_fire%传说:&r &f据说是远古勇者的佩剑"
-      
-      # 工具类专属的随机lore
-      TOOL:
-        - "&8⛏ %color_nature%高效:&r &f效率超群，事半功倍"
-        - "&8⛏ %color_nature%神奇:&r &f似乎有自动修复的能力"
-        - "&8⛏ %color_nature%工艺:&r &f由精湛的工匠打造"
-        - "&8⛏ %color_nature%秘密:&r &f隐藏着不为人知的秘密"
-      
-      # 盔甲类专属的随机lore
-      ARMOR:
-        - "&8🛡 %color_water%防护:&r &f提供超乎寻常的保护"
-        - "&8🛡 %color_water%坚固:&r &f能够抵御强大的冲击"
-        - "&8🛡 %color_water%舒适:&r &f穿戴舒适，行动自如"
-        - "&8🛡 %color_water%秘术:&r &f注入了神秘的防护魔法"
-      
-      # 钻石物品专属的随机lore
-      DIAMOND:
-        - "&8💎 %color_rare%华丽:&r &f闪烁着璀璨的光芒"
-        - "&8💎 %color_rare%尊贵:&r &f彰显主人的非凡地位"
-        - "&8💎 %color_rare%珍稀:&r &f由罕见的钻石精心打造"
-      
-      # 下界合金物品专属的随机lore
-      NETHERITE:
-        - "&8🔥 %color_magic%炽热:&r &f触碰时能感受到来自下界的温度"
-        - "&8🔥 %color_magic%坚不可摧:&r &f几乎不会被任何力量摧毁"
-        - "&8🔥 %color_magic%古老:&r &f蕴含着远古下界的力量"
+  source-prefix: "&7来源：&f%source%"
   
   # 自定义额外lore
   custom-lore:
-    enabled: false
+    enabled: true
     # 自定义lore列表，支持PlaceholderAPI变量和颜色代码
     lines:
-      # 物品信息示例
-      - "&8✧ %color_common%物品ID:&r &f%material_name%"
-      - "&8✧ %color_common%服务器:&r &f%server_name%"
+      - "&6物品ID：&f%material_name%"
+      - "&6服务器：&f%server_name%"
       
       # 多世界插件变量示例 (Multiverse-Core)
-      - "&8❂ %color_common%世界:&r &f%mv_worldname%"
-      - "&8❂ %color_common%环境:&r &f%mv_worldenv%"
+      - "&6世界名称：&f%mv_worldname%"
+      - "&6世界别名：&f%mv_worldalias%"
+      - "&6世界环境：&f%mv_worldenv%"
+      
+      # 多世界插件变量示例 (MultiWorld，如果安装了MultiWorld插件)
+      # - "&6世界名称：&f%mw_worldname%"
+      # - "&6世界别名：&f%mw_worldalias%"
       
       # PlaceholderAPI 变量示例 (需要安装对应的扩展)
-      - "&8✦ %color_common%等级:&r &f%player_level%"
-      - "&8✦ %color_common%血量:&r &f%player_health%&8/&f%player_max_health%"
+      #- "&a等级：&f%player_level%"
+      - "&a血量：&f%player_health%/%player_max_health%"
+      - "&a位置：&f%player_x%, %player_y%, %player_z%"
       
       # Vault 变量示例 (需要安装Vault)
-      - "&8❖ %color_common%余额:&r &f%vault_balance%"
+      - "&e余额：&f%vault_balance%"
       
       # MMOItems 变量示例 (需要安装MMOItems)
-      - "&8◈ %color_common%类型:&r &f%mmoitems_type%"
-      - "&8◈ %color_common%等级:&r &f%mmoitems_item_level%" 
+      # - "&d物品类型：&f%mmoitems_type%"
+      # - "&d物品等级：&f%mmoitems_item_level%"
+      
+      # ItemsAdder 变量示例 (需要安装ItemsAdder)
+      # - "&3自定义ID：&f%itemsadder_namespace%"
+      
+      # MythicMobs 变量示例 (需要安装MythicMobs)
+      # - "&5神话物品：&f%mythicmobs_item_id%"
+      
+      # 添加更多自定义lore行，每行一个
+      # - "&6示例：&f这是一个示例lore" 

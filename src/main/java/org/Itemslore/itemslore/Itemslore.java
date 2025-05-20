@@ -1,89 +1,90 @@
 package org.Itemslore.itemslore;
 
-import org.Itemslore.itemslore.commands.CommandHandler;
-import org.Itemslore.itemslore.listeners.ItemEventListener;
-import org.Itemslore.itemslore.managers.ConfigManager;
-import org.Itemslore.itemslore.managers.LoreManager;
-import org.Itemslore.itemslore.managers.PluginManager;
-import org.Itemslore.itemslore.utils.ColorManager;
-import org.Itemslore.itemslore.utils.VariableProcessor;
+import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * ItemsLore 插件主类
- */
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 public final class Itemslore extends JavaPlugin {
     
     private static Itemslore instance;
-    
-    // 管理器
-    private ConfigManager configManager;
-    private PluginManager pluginManager;
-    private LoreManager loreManager;
-    
-    // 工具类
-    private ColorManager colorManager;
-    private VariableProcessor variableProcessor;
+    private FileConfiguration config;
+    private boolean placeholderAPIEnabled = false;
+    private final Map<String, Plugin> supportedPlugins = new HashMap<>();
     
     @Override
     public void onEnable() {
-        // 设置单例实例
         instance = this;
         
-        // 初始化管理器和工具类
-        initManagers();
+        // 保存默认配置
+        saveDefaultConfig();
+        reloadConfig();
+        
+        // 检测变量支持插件
+        detectSupportedPlugins();
         
         // 注册事件监听器
-        registerListeners();
+        getServer().getPluginManager().registerEvents(new ItemListener(this), this);
         
         // 注册命令
-        registerCommands();
+        PluginCommand command = getCommand("itemslore");
+        if (command != null) {
+            command.setExecutor(new ItemsloreCommand(this));
+        } else {
+            getLogger().warning("无法注册命令'itemslore'，请检查plugin.yml配置！");
+        }
         
         getLogger().info("ItemsLore插件已成功启动！");
     }
     
     /**
-     * 初始化管理器和工具类
+     * 检测服务器上已安装的支持变量的插件
      */
-    private void initManagers() {
-        // 初始化配置管理器
-        configManager = new ConfigManager(this);
-        configManager.initialize();
+    private void detectSupportedPlugins() {
+        // 检测PlaceholderAPI
+        detectPlugin("PlaceholderAPI", true);
         
-        // 初始化插件管理器
-        pluginManager = new PluginManager(this);
-        pluginManager.detectSupportedPlugins();
+        // 检测Vault
+        detectPlugin("Vault", false);
         
-        // 初始化工具类
-        colorManager = new ColorManager(this);
-        variableProcessor = new VariableProcessor(this);
+        // 检测MMOItems
+        detectPlugin("MMOItems", false);
         
-        // 初始化Lore管理器
-        loreManager = new LoreManager(this, colorManager, variableProcessor);
+        // 检测ItemsAdder
+        detectPlugin("ItemsAdder", false);
+        
+        // 检测MythicMobs
+        detectPlugin("MythicMobs", false);
+        
+        // 检测Multiverse-Core
+        detectPlugin("Multiverse-Core", false);
+        
+        // 检测MultiWorld
+        detectPlugin("MultiWorld", false);
     }
     
     /**
-     * 注册事件监听器
+     * 检测并注册插件
+     * @param pluginName 插件名称
+     * @param isPlaceholderAPI 是否为PlaceholderAPI插件
      */
-    private void registerListeners() {
-        // 注册物品事件监听器
-        getServer().getPluginManager().registerEvents(
-                new ItemEventListener(this, loreManager), this);
-    }
-    
-    /**
-     * 注册命令
-     */
-    private void registerCommands() {
-        // 注册主命令
-        PluginCommand command = getCommand("itemslore");
-        if (command != null) {
-            CommandHandler commandHandler = new CommandHandler(this, colorManager, loreManager, configManager);
-            command.setExecutor(commandHandler);
-        } else {
-            getLogger().warning("无法注册命令'itemslore'，请检查plugin.yml配置！");
+    private void detectPlugin(String pluginName, boolean isPlaceholderAPI) {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin(pluginName);
+        if (plugin != null && plugin.isEnabled()) {
+            supportedPlugins.put(pluginName, plugin);
+            if (isPlaceholderAPI) {
+                placeholderAPIEnabled = true;
+                getLogger().info("已检测到PlaceholderAPI，已启用变量支持！");
+            } else {
+                getLogger().info("已检测到" + pluginName + "，已启用相关变量支持！");
+            }
         }
     }
     
@@ -92,77 +93,32 @@ public final class Itemslore extends JavaPlugin {
         getLogger().info("ItemsLore插件已关闭！");
     }
     
-    /**
-     * 获取单例实例
-     * @return 插件实例
-     */
     public static Itemslore getInstance() {
         return instance;
     }
     
-    /**
-     * 获取配置文件
-     * @return 配置文件
-     */
-    @Override
-    public FileConfiguration getConfig() {
-        return configManager.getConfig();
-    }
-    
-    /**
-     * 重新加载配置
-     */
     @Override
     public void reloadConfig() {
-        configManager.reloadConfig();
+        // 加载配置文件
+        File configFile = new File(getDataFolder(), "config.yml");
+        if (!configFile.exists()) {
+            saveResource("config.yml", false);
+        }
+        config = YamlConfiguration.loadConfiguration(configFile);
     }
     
-    /**
-     * 保存配置
-     */
+    @Override
+    public FileConfiguration getConfig() {
+        return config;
+    }
+    
     @Override
     public void saveConfig() {
-        configManager.saveConfig();
-    }
-    
-    /**
-     * 获取插件管理器
-     * @return 插件管理器
-     */
-    public PluginManager getPluginManager() {
-        return pluginManager;
-    }
-    
-    /**
-     * 获取配置管理器
-     * @return 配置管理器
-     */
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
-    
-    /**
-     * 获取Lore管理器
-     * @return Lore管理器
-     */
-    public LoreManager getLoreManager() {
-        return loreManager;
-    }
-    
-    /**
-     * 获取颜色管理器
-     * @return 颜色管理器
-     */
-    public ColorManager getColorManager() {
-        return colorManager;
-    }
-    
-    /**
-     * 获取变量处理器
-     * @return 变量处理器
-     */
-    public VariableProcessor getVariableProcessor() {
-        return variableProcessor;
+        try {
+            config.save(new File(getDataFolder(), "config.yml"));
+        } catch (IOException e) {
+            getLogger().severe("无法保存配置文件: " + e.getMessage());
+        }
     }
     
     /**
@@ -170,6 +126,24 @@ public final class Itemslore extends JavaPlugin {
      * @return 是否启用PlaceholderAPI
      */
     public boolean isPlaceholderAPIEnabled() {
-        return pluginManager.isPlaceholderAPIEnabled();
+        return placeholderAPIEnabled;
+    }
+    
+    /**
+     * 获取指定插件
+     * @param pluginName 插件名称
+     * @return 插件实例，如果不存在则返回null
+     */
+    public Plugin getSupportedPlugin(String pluginName) {
+        return supportedPlugins.get(pluginName);
+    }
+    
+    /**
+     * 检查指定插件是否已启用
+     * @param pluginName 插件名称
+     * @return 是否已启用
+     */
+    public boolean isPluginEnabled(String pluginName) {
+        return supportedPlugins.containsKey(pluginName);
     }
 }
