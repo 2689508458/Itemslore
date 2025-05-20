@@ -1,5 +1,6 @@
 package org.Itemslore.itemslore;
 
+import org.Itemslore.itemslore.managers.PluginManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -16,16 +17,16 @@ import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ItemListener implements Listener {
 
     private final Itemslore plugin;
     private final Pattern variablePattern = Pattern.compile("%([a-zA-Z0-9_]+)_([a-zA-Z0-9_]+)%");
+    private final Random random = new Random();
 
     public ItemListener(Itemslore plugin) {
         this.plugin = plugin;
@@ -93,11 +94,11 @@ public class ItemListener implements Listener {
         
         // 检查是否已经有lore，避免重复添加
         String durabilityPrefix = ChatColor.translateAlternateColorCodes('&', 
-                plugin.getConfig().getString("lore.durability-prefix", "&7耐久度："));
+                "&8❖ &7耐久");
         
         boolean hasLore = false;
         for (String line : lore) {
-            if (line.startsWith(ChatColor.translateAlternateColorCodes('&', durabilityPrefix))) {
+            if (line.contains(durabilityPrefix)) {
                 hasLore = true;
                 break;
             }
@@ -111,18 +112,32 @@ public class ItemListener implements Listener {
         boolean showPlayer = plugin.getConfig().getBoolean("lore.show-player", true);
         boolean showSource = plugin.getConfig().getBoolean("lore.show-source", true);
         
+        // 添加顶部分割线
+        lore.add(ChatColor.translateAlternateColorCodes('&', "&8&m                         "));
+        lore.add("");
+        
         // 添加耐久度
         if (showDurability && meta instanceof Damageable) {
             Damageable damageable = (Damageable) meta;
             int maxDurability = item.getType().getMaxDurability();
             int currentDurability = maxDurability - damageable.getDamage();
             
+            // 计算耐久度百分比
+            int durabilityPercentage = (maxDurability > 0) ? (currentDurability * 100 / maxDurability) : 100;
+            
+            // 获取动态耐久度颜色
+            String durabilityColor = getDurabilityColor(durabilityPercentage);
+            
             String durabilityText = plugin.getConfig().getString("lore.durability-format", "&7耐久度：&f%current%/%max%");
-            durabilityText = ChatColor.translateAlternateColorCodes('&', durabilityText)
+            durabilityText = durabilityText
                     .replace("%current%", String.valueOf(currentDurability))
-                    .replace("%max%", String.valueOf(maxDurability));
+                    .replace("%max%", String.valueOf(maxDurability))
+                    .replace("%durability_color%", durabilityColor);
+            
+            durabilityText = ChatColor.translateAlternateColorCodes('&', durabilityText);
             
             lore.add(durabilityText);
+            lore.add("");
         }
         
         // 添加获取时间
@@ -154,6 +169,15 @@ public class ItemListener implements Listener {
             lore.add(sourceText);
         }
         
+        // 添加底部分割线
+        lore.add("");
+        lore.add(ChatColor.translateAlternateColorCodes('&', "&8&m                         "));
+        
+        // 添加随机Lore
+        if (plugin.getConfig().getBoolean("lore.random-lore.enabled", false)) {
+            addRandomLoreToItem(lore, item, player);
+        }
+        
         // 添加自定义Lore
         if (plugin.getConfig().getBoolean("lore.custom-lore.enabled", false)) {
             List<String> customLoreLines = plugin.getConfig().getStringList("lore.custom-lore.lines");
@@ -167,6 +191,9 @@ public class ItemListener implements Listener {
                             .replace("%server_name%", Bukkit.getServer().getName())
                             .replace("%material_name%", item.getType().toString())
                             .replace("%source%", source);
+                    
+                    // 处理颜色模板变量
+                    processedLine = processColorTemplates(processedLine);
                     
                     // 处理所有插件变量
                     processedLine = parseAllVariables(processedLine, player, item);
@@ -185,11 +212,169 @@ public class ItemListener implements Listener {
     }
     
     /**
+     * 获取根据耐久度百分比对应的颜色
+     * @param percentage 耐久度百分比
+     * @return 颜色代码
+     */
+    private String getDurabilityColor(int percentage) {
+        // 如果动态耐久度颜色未启用，返回默认颜色
+        if (!plugin.getConfig().getBoolean("colors.dynamic.durability.enabled", true)) {
+            return "&f";
+        }
+        
+        // 检查不同耐久度范围对应的颜色
+        if (percentage <= 20) {
+            return plugin.getConfig().getString("colors.dynamic.durability.ranges.0-20", "&c");
+        } else if (percentage <= 50) {
+            return plugin.getConfig().getString("colors.dynamic.durability.ranges.21-50", "&e");
+        } else if (percentage <= 80) {
+            return plugin.getConfig().getString("colors.dynamic.durability.ranges.51-80", "&a");
+        } else {
+            return plugin.getConfig().getString("colors.dynamic.durability.ranges.81-100", "&2");
+        }
+    }
+    
+    /**
+     * 处理文本中的颜色模板变量
+     * 支持格式: %color_模板名%
+     */
+    private String processColorTemplates(String text) {
+        // 匹配颜色模板变量 %color_xxx%
+        Pattern colorPattern = Pattern.compile("%color_([a-zA-Z0-9_]+)%([^%]*)");
+        Matcher matcher = colorPattern.matcher(text);
+        
+        StringBuilder result = new StringBuilder(text);
+        int offset = 0;
+        
+        while (matcher.find()) {
+            String fullMatch = matcher.group(0);
+            String templateName = matcher.group(1);
+            String textContent = matcher.group(2);
+            
+            // 尝试获取渐变模板
+            String gradientTemplate = plugin.getConfig().getString("colors.templates.gradients." + templateName);
+            
+            // 尝试获取样式模板
+            if (gradientTemplate == null) {
+                gradientTemplate = plugin.getConfig().getString("colors.templates.styles." + templateName);
+            }
+            
+            // 如果找到模板
+            if (gradientTemplate != null) {
+                String replacement = gradientTemplate.replace("%text%", textContent);
+                
+                // 替换文本
+                int start = matcher.start() + offset;
+                int end = matcher.end() + offset;
+                result.replace(start, end, replacement);
+                
+                // 调整偏移
+                offset += replacement.length() - fullMatch.length();
+            }
+        }
+        
+        return result.toString();
+    }
+    
+    /**
+     * 为物品添加随机Lore
+     * @param lore 当前lore列表
+     * @param item 物品
+     * @param player 玩家
+     */
+    private void addRandomLoreToItem(List<String> lore, ItemStack item, Player player) {
+        if (!plugin.getConfig().getBoolean("lore.random-lore.enabled", false)) {
+            return;
+        }
+        
+        // 获取随机lore数量
+        int amount = plugin.getConfig().getInt("lore.random-lore.amount", 1);
+        // 如果配置了范围（如：1-3），则随机生成在范围内的数量
+        if (amount <= 0) amount = 1;
+        
+        if (amount > 0) {
+            // 添加分隔空行
+            lore.add("");
+            
+            // 收集所有可用的随机lore
+            List<String> availableLores = new ArrayList<>();
+            
+            // 添加通用随机lore
+            List<String> allLores = plugin.getConfig().getStringList("lore.random-lore.pools.ALL");
+            if (allLores != null && !allLores.isEmpty()) {
+                availableLores.addAll(allLores);
+            }
+            
+            // 添加物品类型特定的随机lore
+            String materialName = item.getType().toString();
+            
+            // 检查材料名称是否包含特定关键字，并添加对应的随机lore
+            if (materialName.contains("DIAMOND")) {
+                List<String> diamondLores = plugin.getConfig().getStringList("lore.random-lore.pools.DIAMOND");
+                if (diamondLores != null && !diamondLores.isEmpty()) {
+                    availableLores.addAll(diamondLores);
+                }
+            }
+            
+            if (materialName.contains("NETHERITE")) {
+                List<String> netheriteLores = plugin.getConfig().getStringList("lore.random-lore.pools.NETHERITE");
+                if (netheriteLores != null && !netheriteLores.isEmpty()) {
+                    availableLores.addAll(netheriteLores);
+                }
+            }
+            
+            // 添加物品类别特定的随机lore
+            if (isWeaponItem(item.getType())) {
+                List<String> weaponLores = plugin.getConfig().getStringList("lore.random-lore.pools.WEAPON");
+                if (weaponLores != null && !weaponLores.isEmpty()) {
+                    availableLores.addAll(weaponLores);
+                }
+            } else if (isToolItem(item.getType())) {
+                List<String> toolLores = plugin.getConfig().getStringList("lore.random-lore.pools.TOOL");
+                if (toolLores != null && !toolLores.isEmpty()) {
+                    availableLores.addAll(toolLores);
+                }
+            } else if (isArmorItem(item.getType())) {
+                List<String> armorLores = plugin.getConfig().getStringList("lore.random-lore.pools.ARMOR");
+                if (armorLores != null && !armorLores.isEmpty()) {
+                    availableLores.addAll(armorLores);
+                }
+            }
+            
+            // 如果有可用的随机lore
+            if (!availableLores.isEmpty()) {
+                // 随机选择指定数量的lore
+                Collections.shuffle(availableLores);
+                int actualAmount = Math.min(amount, availableLores.size());
+                
+                for (int i = 0; i < actualAmount; i++) {
+                    String randomLore = availableLores.get(i);
+                    
+                    // 处理变量
+                    randomLore = randomLore.replace("%player_name%", player.getName())
+                            .replace("%material_name%", item.getType().toString());
+                    
+                    // 处理颜色模板变量
+                    randomLore = processColorTemplates(randomLore);
+                    
+                    // 处理所有插件变量
+                    randomLore = parseAllVariables(randomLore, player, item);
+                    
+                    // 处理颜色代码
+                    randomLore = ChatColor.translateAlternateColorCodes('&', randomLore);
+                    
+                    lore.add(randomLore);
+                }
+            }
+        }
+    }
+    
+    /**
      * 处理文本中的所有变量
      */
     private String parseAllVariables(String text, Player player, ItemStack item) {
         // 首先尝试使用PlaceholderAPI处理所有变量
-        if (plugin.isPlaceholderAPIEnabled() && player != null) {
+        if (plugin.getPluginManager().isPlaceholderAPIEnabled() && player != null) {
             try {
                 text = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, text);
             } catch (Exception e) {
@@ -250,12 +435,12 @@ public class ItemListener implements Listener {
      * 处理Multiverse-Core插件变量
      */
     private String processMultiverseVariable(String variableName, Player player) {
-        if (!plugin.isPluginEnabled("Multiverse-Core") || player == null) {
+        if (!plugin.getPluginManager().isPluginEnabled("Multiverse-Core") || player == null) {
             return "%" + "mv" + "_" + variableName + "%";
         }
         
         try {
-            Plugin multiversePlugin = plugin.getSupportedPlugin("Multiverse-Core");
+            Plugin multiversePlugin = plugin.getPluginManager().getSupportedPlugin("Multiverse-Core");
             if (multiversePlugin == null) return "%" + "mv" + "_" + variableName + "%";
             
             World world = player.getWorld();
@@ -309,12 +494,12 @@ public class ItemListener implements Listener {
      * 处理MultiWorld插件变量
      */
     private String processMultiWorldVariable(String variableName, Player player) {
-        if (!plugin.isPluginEnabled("MultiWorld") || player == null) {
+        if (!plugin.getPluginManager().isPluginEnabled("MultiWorld") || player == null) {
             return "%" + "mw" + "_" + variableName + "%";
         }
         
         try {
-            Plugin multiWorldPlugin = plugin.getSupportedPlugin("MultiWorld");
+            Plugin multiWorldPlugin = plugin.getPluginManager().getSupportedPlugin("MultiWorld");
             if (multiWorldPlugin == null) return "%" + "mw" + "_" + variableName + "%";
             
             World world = player.getWorld();
@@ -366,13 +551,13 @@ public class ItemListener implements Listener {
      * 处理Vault插件变量
      */
     private String processVaultVariable(String variableName, Player player) {
-        if (!plugin.isPluginEnabled("Vault") || player == null) {
+        if (!plugin.getPluginManager().isPluginEnabled("Vault") || player == null) {
             return "%" + "vault" + "_" + variableName + "%";
         }
         
         try {
             // 尝试获取Vault经济服务
-            Plugin vaultPlugin = plugin.getSupportedPlugin("Vault");
+            Plugin vaultPlugin = plugin.getPluginManager().getSupportedPlugin("Vault");
             if (vaultPlugin == null) return "%" + "vault" + "_" + variableName + "%";
             
             // 动态尝试使用Vault API，避免直接依赖
@@ -406,13 +591,13 @@ public class ItemListener implements Listener {
      * 处理MMOItems插件变量
      */
     private String processMMOItemsVariable(String variableName, ItemStack item) {
-        if (!plugin.isPluginEnabled("MMOItems") || item == null) {
+        if (!plugin.getPluginManager().isPluginEnabled("MMOItems") || item == null) {
             return "%" + "mmoitems" + "_" + variableName + "%";
         }
         
         try {
             // 尝试动态使用MMOItems API
-            Plugin mmoItemsPlugin = plugin.getSupportedPlugin("MMOItems");
+            Plugin mmoItemsPlugin = plugin.getPluginManager().getSupportedPlugin("MMOItems");
             if (mmoItemsPlugin == null) return "%" + "mmoitems" + "_" + variableName + "%";
             
             // 这里可以添加特定的MMOItems变量处理
@@ -430,13 +615,13 @@ public class ItemListener implements Listener {
      * 处理ItemsAdder插件变量
      */
     private String processItemsAdderVariable(String variableName, ItemStack item) {
-        if (!plugin.isPluginEnabled("ItemsAdder") || item == null) {
+        if (!plugin.getPluginManager().isPluginEnabled("ItemsAdder") || item == null) {
             return "%" + "itemsadder" + "_" + variableName + "%";
         }
         
         try {
             // 尝试动态使用ItemsAdder API
-            Plugin itemsAdderPlugin = plugin.getSupportedPlugin("ItemsAdder");
+            Plugin itemsAdderPlugin = plugin.getPluginManager().getSupportedPlugin("ItemsAdder");
             if (itemsAdderPlugin == null) return "%" + "itemsadder" + "_" + variableName + "%";
             
             // 这里可以添加特定的ItemsAdder变量处理
@@ -452,13 +637,13 @@ public class ItemListener implements Listener {
      * 处理MythicMobs插件变量
      */
     private String processMythicMobsVariable(String variableName, ItemStack item) {
-        if (!plugin.isPluginEnabled("MythicMobs") || item == null) {
+        if (!plugin.getPluginManager().isPluginEnabled("MythicMobs") || item == null) {
             return "%" + "mythicmobs" + "_" + variableName + "%";
         }
         
         try {
             // 尝试动态使用MythicMobs API
-            Plugin mythicMobsPlugin = plugin.getSupportedPlugin("MythicMobs");
+            Plugin mythicMobsPlugin = plugin.getPluginManager().getSupportedPlugin("MythicMobs");
             if (mythicMobsPlugin == null) return "%" + "mythicmobs" + "_" + variableName + "%";
             
             // 这里可以添加特定的MythicMobs变量处理
