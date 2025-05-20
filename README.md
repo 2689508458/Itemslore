@@ -16,6 +16,7 @@ ItemsLore是一款功能强大的Minecraft Bukkit/Spigot服务器插件，可以
 - **完整的命令**: 提供丰富的命令和Tab补全支持
 - **变量支持**: 在Lore中支持使用变量，如玩家名称、时间、物品材质等
 - **概率系统**: 精细控制随机Lore的生成概率
+- **击杀统计**: 记录物品击杀怪物和玩家的数量，让武器随战斗历史成长
 
 ## 🔧 插件配置
 
@@ -27,6 +28,8 @@ ItemsLore是一款功能强大的Minecraft Bukkit/Spigot服务器插件，可以
 - 支持自定义符号和颜色
 - 每种物品类型可设置不同的随机Lore生成概率
 - 唯一性Lore确保特定类型的描述不会重复出现
+- 固定Lore和唯一性Lore是否计入随机数量的开关设置
+- 击杀统计显示与自动更新设置
 
 ## 📋 安装方法
 
@@ -60,16 +63,29 @@ ItemsLore是一款功能强大的Minecraft Bukkit/Spigot服务器插件，可以
 随机Lore支持多种配置方式：
 
 1. **基础格式**：`["文本内容", 权重]`
-   - 例如：`["&8⚔ &c锋利:&r &f锋利无比，可轻易切断钢铁", 5]`
-   - 权重越高，该Lore被选中的概率越大
+   - 例如：`["&8⚔ &c锋利:&r &f锋利无比，可轻易切断钢铁", 0.5]`
+   - 权重范围为0.1-1.0，表示10%-100%的生成概率
 
 2. **唯一性Lore**：`["文本内容", 权重, true]` 或 `["UNIQUE:文本内容", 权重]`
-   - 例如：`["UNIQUE:&8⚔ &c命运:&r &f在%ilore_player%手中有着非凡力量", 2]`
+   - 例如：`["UNIQUE:&8⚔ &c命运:&r &f在%ilore_player%手中有着非凡力量", 0.2]`
    - 唯一性Lore确保同一类型的描述在一个物品上只会出现一次
 
-3. **变量支持**：Lore文本中可使用变量
+3. **固定Lore**：`["文本内容", 权重, false, true]` 或 `["FIXED:文本内容", 权重]`
+   - 例如：`["FIXED:&8⚔ &c武器类型:&r &f近战武器", 1.0]`
+   - 固定Lore总是会出现，不受随机概率影响
+
+4. **变量支持**：Lore文本中可使用变量
    - 例如：`"&8✧ &e传说:&r &f这件物品在%ilore_player%手中逐渐展现其力量"`
-   - 支持的变量包括：`%ilore_player%`, `%ilore_time%`, `%material_name%`等
+   - 支持的变量包括：`%ilore_player%`, `%ilore_time%`, `%material_name%`, `%ilore_mob_kills%`, `%ilore_player_kills%`等
+
+### 击杀统计功能
+
+物品的击杀统计数据会自动记录并显示在Lore中：
+
+- 使用`%ilore_mob_kills%`变量显示怪物击杀数
+- 使用`%ilore_player_kills%`变量显示玩家击杀数
+- 击杀统计会在物品击杀敌对生物或玩家时自动更新
+- 可在配置文件中启用/禁用自动更新Lore
 
 ## 🔌 与其他插件兼容
 
@@ -104,6 +120,8 @@ templates:
       - "%ilore_time%"
       - "%ilore_player%"
       - "%ilore_source%"
+      - "%ilore_mob_kills%"
+      - "%ilore_player_kills%"
       - ""
       - "%ilore_bottom_separator%"
 
@@ -111,8 +129,12 @@ templates:
 random-lore:
   enabled: true
   amount:
-    min: 1
-    max: 3
+    min: 2
+    max: 4
+  # 固定Lore是否计入随机Lore数量
+  fixed-count-as-random: false
+  # 唯一Lore是否计入随机Lore数量
+  unique-count-as-random: true
   chances:
     global: 100
     types:
@@ -120,8 +142,18 @@ random-lore:
       NETHERITE: 95
   pools:
     WEAPON:
-      - ["&8⚔ &c锋利:&r &f锋利无比，可轻易切断钢铁", 5]
-      - ["UNIQUE:&8⚔ &c命运:&r &f在%ilore_player%得到它的那一刻，命运之轮开始转动", 2]
+      - ["FIXED:&8⚔ &c武器类型:&r &f近战武器", 1.0, false, true]
+      - ["&8⚔ &c锋利:&r &f锋利无比，可轻易切断钢铁", 0.5]
+      - ["UNIQUE:&8⚔ &c命运:&r &f在%ilore_player%得到它的那一刻，命运之轮开始转动", 0.2]
+
+# 击杀统计设置
+kill-stats:
+  enabled: true
+  show-mob-kills: true
+  mob-kills-prefix: "&8⚔ &7击杀怪物: &f%ilore_mob_kills%"
+  show-player-kills: true
+  player-kills-prefix: "&8☠ &7击杀玩家: &f%ilore_player_kills%"
+  auto-update-lore: true
 ```
 
 ## 🌟 展示
@@ -135,6 +167,7 @@ random-lore:
 ❖ 耐久: 1561/1562
 
 [ 随机武器特性 ]
+⚔ 武器类型: 近战武器
 ⚔ 锋利: 锋利无比，可轻易切断钢铁
 ⚔ 命运: 在xiaoyue得到它的那一刻，命运之轮开始转动
 
@@ -143,11 +176,19 @@ random-lore:
 ◈ 获取时间: 2023-05-20 18:49
 ✦ 获取者: xiaoyue
 ✧ 来源: 模板应用
+⚔ 击杀怪物: 57
+☠ 击杀玩家: 3
 
 ⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤
 ```
 
 ## 📝 更新日志
+
+### 版本 1.2.0
+- 添加击杀统计功能，记录物品击杀怪物和玩家的数量
+- 添加固定Lore和唯一性Lore计数控制开关
+- 优化了唯一性Lore的识别逻辑
+- 改进了随机Lore的数量控制
 
 ### 版本 1.1.0
 - 添加唯一性Lore支持
