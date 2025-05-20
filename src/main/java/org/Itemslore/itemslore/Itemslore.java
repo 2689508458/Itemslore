@@ -3,10 +3,12 @@ package org.Itemslore.itemslore;
 import org.Itemslore.itemslore.commands.CommandHandler;
 import org.Itemslore.itemslore.commands.CommandTabCompleter;
 import org.Itemslore.itemslore.listeners.ItemEventListener;
+import org.Itemslore.itemslore.listeners.KillEventListener;
 import org.Itemslore.itemslore.managers.ConfigManager;
 import org.Itemslore.itemslore.managers.LoreManager;
 import org.Itemslore.itemslore.managers.PluginManager;
 import org.Itemslore.itemslore.utils.ColorManager;
+import org.Itemslore.itemslore.utils.ItemDataManager;
 import org.Itemslore.itemslore.utils.VariableProcessor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -27,6 +29,7 @@ public final class Itemslore extends JavaPlugin {
     // 工具类
     private ColorManager colorManager;
     private VariableProcessor variableProcessor;
+    private ItemDataManager itemDataManager;
     
     @Override
     public void onEnable() {
@@ -60,9 +63,10 @@ public final class Itemslore extends JavaPlugin {
         // 初始化工具类
         colorManager = new ColorManager(this);
         variableProcessor = new VariableProcessor(this);
+        itemDataManager = new ItemDataManager(this);
         
         // 初始化Lore管理器
-        loreManager = new LoreManager(this, colorManager, variableProcessor);
+        loreManager = new LoreManager(this, colorManager, variableProcessor, itemDataManager);
     }
     
     /**
@@ -72,6 +76,10 @@ public final class Itemslore extends JavaPlugin {
         // 注册物品事件监听器
         getServer().getPluginManager().registerEvents(
                 new ItemEventListener(this, loreManager), this);
+        
+        // 注册击杀事件监听器
+        getServer().getPluginManager().registerEvents(
+                new KillEventListener(this), this);
     }
     
     /**
@@ -168,6 +176,14 @@ public final class Itemslore extends JavaPlugin {
      */
     public VariableProcessor getVariableProcessor() {
         return variableProcessor;
+    }
+    
+    /**
+     * 获取物品数据管理器
+     * @return 物品数据管理器
+     */
+    public ItemDataManager getItemDataManager() {
+        return itemDataManager;
     }
     
     /**

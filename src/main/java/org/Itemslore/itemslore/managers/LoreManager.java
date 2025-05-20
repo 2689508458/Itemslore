@@ -2,9 +2,8 @@ package org.Itemslore.itemslore.managers;
 
 import org.Itemslore.itemslore.Itemslore;
 import org.Itemslore.itemslore.utils.ColorManager;
+import org.Itemslore.itemslore.utils.ItemDataManager;
 import org.Itemslore.itemslore.utils.VariableProcessor;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -14,7 +13,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -26,12 +24,14 @@ public class LoreManager {
     private final Itemslore plugin;
     private final ColorManager colorManager;
     private final VariableProcessor variableProcessor;
+    private final ItemDataManager itemDataManager;
     private final Random random = new Random();
     
-    public LoreManager(Itemslore plugin, ColorManager colorManager, VariableProcessor variableProcessor) {
+    public LoreManager(Itemslore plugin, ColorManager colorManager, VariableProcessor variableProcessor, ItemDataManager itemDataManager) {
         this.plugin = plugin;
         this.colorManager = colorManager;
         this.variableProcessor = variableProcessor;
+        this.itemDataManager = itemDataManager;
     }
     
     /**
@@ -193,10 +193,40 @@ public class LoreManager {
                 continue;
             }
             
+            // 处理怪物击杀数
+            if (processedLine.contains("%ilore_mob_kills%") && 
+                plugin.getConfig().getBoolean("lore.kill-stats.enabled", true) &&
+                plugin.getConfig().getBoolean("lore.kill-stats.show-mob-kills", true)) {
+                
+                int mobKills = itemDataManager.getMobKills(item);
+                String killsText = plugin.getConfig().getString("lore.kill-stats.mob-kills-prefix", "&8⚔ &7击杀怪物: &f%ilore_mob_kills%");
+                killsText = killsText.replace("%ilore_mob_kills%", String.valueOf(mobKills));
+                
+                processedLine = processedLine.replace("%ilore_mob_kills%", killsText);
+            } else if (processedLine.contains("%ilore_mob_kills%")) {
+                // 如果不显示怪物击杀数，则删除该行
+                continue;
+            }
+            
+            // 处理玩家击杀数
+            if (processedLine.contains("%ilore_player_kills%") && 
+                plugin.getConfig().getBoolean("lore.kill-stats.enabled", true) &&
+                plugin.getConfig().getBoolean("lore.kill-stats.show-player-kills", true)) {
+                
+                int playerKills = itemDataManager.getPlayerKills(item);
+                String killsText = plugin.getConfig().getString("lore.kill-stats.player-kills-prefix", "&8☠ &7击杀玩家: &f%ilore_player_kills%");
+                killsText = killsText.replace("%ilore_player_kills%", String.valueOf(playerKills));
+                
+                processedLine = processedLine.replace("%ilore_player_kills%", killsText);
+            } else if (processedLine.contains("%ilore_player_kills%")) {
+                // 如果不显示玩家击杀数，则删除该行
+                continue;
+            }
+            
             // 处理随机lore
             if (processedLine.contains("%ilore_random_lore%")) {
-                if (plugin.getConfig().getBoolean("lore.random-lore.enabled", false)) {
-                    // 添加随机lore
+                if (plugin.getConfig().getBoolean("lore.random-lore.enabled", true)) {
+                    // 获取随机lore
                     List<String> randomLores = getRandomLores(item, player);
                     
                     // 判断如果没有随机lore，跳过该行
@@ -204,14 +234,15 @@ public class LoreManager {
                         continue;
                     }
                     
-                    // 将所有随机lore添加到列表中，先添加当前行的替代，后续lore单独添加
-                    if (!randomLores.isEmpty()) {
-                        lore.add(colorManager.colorize(processedLine.replace("%ilore_random_lore%", randomLores.get(0))));
-                        // 添加剩余的随机lore
-                        for (int i = 1; i < randomLores.size(); i++) {
-                            lore.add(colorManager.colorize(randomLores.get(i)));
-                        }
+                    // 将第一个随机lore替换变量
+                    String firstLore = randomLores.remove(0); // 移除第一个并返回它
+                    lore.add(colorManager.colorize(processedLine.replace("%ilore_random_lore%", firstLore)));
+                    
+                    // 添加剩余的随机lore作为单独的行
+                    for (String randomLore : randomLores) {
+                        lore.add(colorManager.colorize(randomLore));
                     }
+                    
                     continue; // 跳过下面的添加，因为已经在这里处理了
                 } else {
                     // 如果随机lore未启用，删除该行
@@ -383,6 +414,30 @@ public class LoreManager {
             lore.add(sourceText);
         }
         
+        // 添加击杀统计
+        boolean showKillStats = plugin.getConfig().getBoolean("lore.kill-stats.enabled", true);
+        if (showKillStats) {
+            // 怪物击杀数
+            if (plugin.getConfig().getBoolean("lore.kill-stats.show-mob-kills", true)) {
+                int mobKills = itemDataManager.getMobKills(item);
+                String killsText = plugin.getConfig().getString("lore.kill-stats.mob-kills-prefix", "&8⚔ &7击杀怪物: &f%ilore_mob_kills%");
+                killsText = colorManager.colorize(killsText
+                        .replace("%ilore_mob_kills%", String.valueOf(mobKills)));
+                
+                lore.add(killsText);
+            }
+            
+            // 玩家击杀数
+            if (plugin.getConfig().getBoolean("lore.kill-stats.show-player-kills", true)) {
+                int playerKills = itemDataManager.getPlayerKills(item);
+                String killsText = plugin.getConfig().getString("lore.kill-stats.player-kills-prefix", "&8☠ &7击杀玩家: &f%ilore_player_kills%");
+                killsText = colorManager.colorize(killsText
+                        .replace("%ilore_player_kills%", String.valueOf(playerKills)));
+                
+                lore.add(killsText);
+            }
+        }
+        
         // 添加底部分割线
         lore.add("");
         String bottomSeparator = plugin.getConfig().getString("lore.basic-settings.bottom-separator", "&8&m⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤⏤");
@@ -392,95 +447,350 @@ public class LoreManager {
     }
     
     /**
-     * 获取随机lore
+     * 获取随机Lore
      * @param item 物品
      * @param player 玩家
-     * @return 随机lore列表
+     * @return 随机Lore列表
      */
     private List<String> getRandomLores(ItemStack item, Player player) {
         List<String> randomLores = new ArrayList<>();
         
+        // 如果随机Lore功能禁用，则返回空列表
         if (!plugin.getConfig().getBoolean("lore.random-lore.enabled", false)) {
             return randomLores;
         }
         
-        // 获取随机lore数量
+        // 获取物品类型
+        Material material = item.getType();
+        String materialName = material.toString();
+        
+        // 检查随机Lore概率
+        double chanceToGenerate = plugin.getConfig().getDouble("lore.random-lore.chances.global", 1.0);
+        
+        // 查找物品类型特定概率
+        ConfigurationSection chancesSection = plugin.getConfig().getConfigurationSection("lore.random-lore.chances.types");
+        if (chancesSection != null) {
+            // 优先检查完整材质名称
+            if (chancesSection.contains(materialName)) {
+                chanceToGenerate = chancesSection.getDouble(materialName) / 100.0;
+            } else {
+                // 检查材质类别
+                for (String key : chancesSection.getKeys(false)) {
+                    if (materialName.contains(key) || 
+                        (key.equals("WEAPON") && isWeaponItem(material)) ||
+                        (key.equals("TOOL") && isToolItem(material)) ||
+                        (key.equals("ARMOR") && isArmorItem(material))) {
+                        
+                        chanceToGenerate = chancesSection.getDouble(key) / 100.0;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // 确保概率在0-1之间
+        chanceToGenerate = Math.max(0.0, Math.min(1.0, chanceToGenerate));
+        
+        // 获取随机Lore配置部分
+        ConfigurationSection poolsSection = plugin.getConfig().getConfigurationSection("lore.random-lore.pools");
+        if (poolsSection == null) {
+            return randomLores;
+        }
+        
+        // 定义要加载的池列表
+        List<String> poolsToLoad = new ArrayList<>();
+        
+        // 总是加载通用池
+        if (poolsSection.contains("ALL")) {
+            poolsToLoad.add("ALL");
+        }
+        
+        // 根据物品类型加载对应的池
+        for (String key : poolsSection.getKeys(false)) {
+            if (key.equals("ALL")) continue; // 通用池已经处理过
+            
+            if (materialName.contains(key) || 
+                (key.equals("WEAPON") && isWeaponItem(material)) ||
+                (key.equals("TOOL") && isToolItem(material)) ||
+                (key.equals("ARMOR") && isArmorItem(material))) {
+                poolsToLoad.add(key);
+            }
+        }
+        
+        // 如果没有找到任何适用的池，只使用通用池
+        if (poolsToLoad.isEmpty() && poolsSection.contains("ALL")) {
+            poolsToLoad.add("ALL");
+        }
+        
+        // 检查配置开关
+        boolean fixedCountAsRandom = plugin.getConfig().getBoolean("lore.random-lore.fixed-count-as-random", false);
+        boolean uniqueCountAsRandom = plugin.getConfig().getBoolean("lore.random-lore.unique-count-as-random", true);
+        
+        // 分离固定Lore和随机Lore
+        List<String> fixedLores = new ArrayList<>(); // 不计入随机数量的固定Lore
+        List<String> countedFixedLores = new ArrayList<>(); // 计入随机数量的固定Lore
+        List<List<Object>> randomLorePool = new ArrayList<>();
+        List<Double> poolWeights = new ArrayList<>();
+        List<Boolean> isUnique = new ArrayList<>();
+        double totalWeight = 0.0;
+        
+        // 从适用的池中加载Lore
+        for (String poolName : poolsToLoad) {
+            List<?> loreList = plugin.getConfig().getList("lore.random-lore.pools." + poolName);
+            if (loreList != null) {
+                for (Object loreObj : loreList) {
+                    double weight = 0.5; // 默认权重为0.5 (50%)
+                    String loreText;
+                    boolean unique = false; // 默认非唯一
+                    boolean fixed = false;  // 默认非固定
+                    
+                    if (loreObj instanceof List) {
+                        // 格式：["文本", 权重, 唯一性标记(可选), 固定标记(可选)]
+                        List<?> loreEntry = (List<?>) loreObj;
+                        if (loreEntry.size() >= 4) {
+                            loreText = String.valueOf(loreEntry.get(0));
+                            
+                            // 处理权重 - 将整数权重转换为0.1-1范围
+                            try {
+                                Object weightObj = loreEntry.get(1);
+                                if (weightObj instanceof Number) {
+                                    double rawWeight = ((Number) weightObj).doubleValue();
+                                    if (rawWeight > 10) { // 如果是旧系统的1-100权重
+                                        weight = Math.max(0.1, Math.min(1.0, rawWeight / 100.0));
+                                    } else { // 如果是新系统的0.1-1权重
+                                        weight = Math.max(0.1, Math.min(1.0, rawWeight));
+                                    }
+                                } else {
+                                    weight = Double.parseDouble(String.valueOf(weightObj)) / 10.0;
+                                    weight = Math.max(0.1, Math.min(1.0, weight));
+                                }
+                            } catch (Exception e) {
+                                weight = 0.5; // 解析失败，使用默认权重
+                            }
+                            
+                            unique = Boolean.parseBoolean(String.valueOf(loreEntry.get(2)));
+                            fixed = Boolean.parseBoolean(String.valueOf(loreEntry.get(3)));
+                        } else if (loreEntry.size() >= 3) {
+                            loreText = String.valueOf(loreEntry.get(0));
+                            
+                            // 处理权重 - 将整数权重转换为0.1-1范围
+                            try {
+                                Object weightObj = loreEntry.get(1);
+                                if (weightObj instanceof Number) {
+                                    double rawWeight = ((Number) weightObj).doubleValue();
+                                    if (rawWeight > 10) { // 如果是旧系统的1-100权重
+                                        weight = Math.max(0.1, Math.min(1.0, rawWeight / 100.0));
+                                    } else { // 如果是新系统的0.1-1权重
+                                        weight = Math.max(0.1, Math.min(1.0, rawWeight));
+                                    }
+                                } else {
+                                    weight = Double.parseDouble(String.valueOf(weightObj)) / 10.0;
+                                    weight = Math.max(0.1, Math.min(1.0, weight));
+                                }
+                            } catch (Exception e) {
+                                weight = 0.5; // 解析失败，使用默认权重
+                            }
+                            
+                            unique = Boolean.parseBoolean(String.valueOf(loreEntry.get(2)));
+                        } else if (loreEntry.size() >= 2) {
+                            loreText = String.valueOf(loreEntry.get(0));
+                            
+                            // 处理权重 - 将整数权重转换为0.1-1范围
+                            try {
+                                Object weightObj = loreEntry.get(1);
+                                if (weightObj instanceof Number) {
+                                    double rawWeight = ((Number) weightObj).doubleValue();
+                                    if (rawWeight > 10) { // 如果是旧系统的1-100权重
+                                        weight = Math.max(0.1, Math.min(1.0, rawWeight / 100.0));
+                                    } else { // 如果是新系统的0.1-1权重
+                                        weight = Math.max(0.1, Math.min(1.0, rawWeight));
+                                    }
+                                } else {
+                                    weight = Double.parseDouble(String.valueOf(weightObj)) / 10.0;
+                                    weight = Math.max(0.1, Math.min(1.0, weight));
+                                }
+                            } catch (Exception e) {
+                                weight = 0.5; // 解析失败，使用默认权重
+                            }
+                        } else if (loreEntry.size() == 1) {
+                            loreText = String.valueOf(loreEntry.get(0));
+                        } else {
+                            continue; // 跳过无效条目
+                        }
+                    } else {
+                        // 简单字符串格式
+                        loreText = String.valueOf(loreObj);
+                    }
+                    
+                    // 检查文本中是否包含特殊标记
+                    if (loreText.contains("UNIQUE:")) {
+                        unique = true;
+                        loreText = loreText.replace("UNIQUE:", "");
+                    }
+                    
+                    if (loreText.contains("FIXED:")) {
+                        fixed = true;
+                        loreText = loreText.replace("FIXED:", "");
+                    }
+                    
+                    // 添加池来源标记，帮助调试
+                    String debugText = loreText + "§r§8[" + poolName + "]";
+                    
+                    // 处理变量和占位符
+                    String processedText = variableProcessor.parseAllVariables(debugText, player, item);
+                    String coloredText = colorManager.colorize(processedText);
+                    
+                    // 移除调试标记用于显示
+                    String finalText = coloredText.replaceAll("§r§8\\[[^\\]]+\\]$", "");
+                    
+                    if (fixed) {
+                        // 固定Lore总是添加，不受概率影响
+                        if (fixedCountAsRandom) {
+                            // 计入随机数量的固定Lore
+                            countedFixedLores.add(finalText);
+                        } else {
+                            // 不计入随机数量的固定Lore
+                            fixedLores.add(finalText);
+                        }
+                    } else {
+                        // 检查是否通过概率检测
+                        if (random.nextDouble() <= chanceToGenerate) {
+                            List<Object> entry = new ArrayList<>();
+                            entry.add(loreText);
+                            entry.add(weight);
+                            
+                            randomLorePool.add(entry);
+                            poolWeights.add(weight);
+                            isUnique.add(unique);
+                            totalWeight += weight;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 先添加不计入随机数量的固定Lore
+        randomLores.addAll(fixedLores);
+        
+        // 如果没有可用的随机Lore池且没有计入数量的固定Lore，返回固定Lore列表
+        if (randomLorePool.isEmpty() && countedFixedLores.isEmpty()) {
+            return randomLores;
+        }
+        
+        // 获取随机Lore的数量设置
         int minAmount = plugin.getConfig().getInt("lore.random-lore.amount.min", 1);
         int maxAmount = plugin.getConfig().getInt("lore.random-lore.amount.max", 3);
         
-        // 确保范围有效
-        if (minAmount <= 0) minAmount = 1;
-        if (maxAmount < minAmount) maxAmount = minAmount;
+        // 确保最小值不大于最大值
+        minAmount = Math.min(minAmount, maxAmount);
         
-        // 随机生成数量
-        int amount = (minAmount == maxAmount) ? minAmount : minAmount + random.nextInt(maxAmount - minAmount + 1);
+        // 计算应该生成的随机Lore数量
+        int targetAmount = (minAmount >= maxAmount) ? minAmount : (random.nextInt(maxAmount - minAmount + 1) + minAmount);
         
-        // 收集所有可用的随机lore
-        List<String> availableLores = new ArrayList<>();
+        // 如果有计入数量的固定Lore，调整目标数量
+        int adjustedTarget = targetAmount - countedFixedLores.size();
+        adjustedTarget = Math.max(0, adjustedTarget); // 确保不会为负数
         
-        // 添加通用随机lore
-        List<String> allLores = plugin.getConfig().getStringList("lore.random-lore.pools.ALL");
-        if (allLores != null && !allLores.isEmpty()) {
-            availableLores.addAll(allLores);
-        }
+        // 限制目标数量不超过可用的随机Lore池大小
+        adjustedTarget = Math.min(adjustedTarget, randomLorePool.size());
         
-        // 添加物品类型特定的随机lore
-        String materialName = item.getType().toString();
+        // 跟踪已选择的唯一Lore的类型
+        List<String> selectedUniqueTypes = new ArrayList<>();
+        List<String> selectedLores = new ArrayList<>();
         
-        // 检查材料名称是否包含特定关键字，并添加对应的随机lore
-        if (materialName.contains("DIAMOND")) {
-            List<String> diamondLores = plugin.getConfig().getStringList("lore.random-lore.pools.DIAMOND");
-            if (diamondLores != null && !diamondLores.isEmpty()) {
-                availableLores.addAll(diamondLores);
-            }
-        }
+        // 最多尝试选择次数，避免死循环
+        int maxAttempts = randomLorePool.size() * 2;
+        int attempts = 0;
         
-        if (materialName.contains("NETHERITE")) {
-            List<String> netheriteLores = plugin.getConfig().getStringList("lore.random-lore.pools.NETHERITE");
-            if (netheriteLores != null && !netheriteLores.isEmpty()) {
-                availableLores.addAll(netheriteLores);
-            }
-        }
-        
-        // 添加物品类别特定的随机lore
-        if (isWeaponItem(item.getType())) {
-            List<String> weaponLores = plugin.getConfig().getStringList("lore.random-lore.pools.WEAPON");
-            if (weaponLores != null && !weaponLores.isEmpty()) {
-                availableLores.addAll(weaponLores);
-            }
-        } else if (isToolItem(item.getType())) {
-            List<String> toolLores = plugin.getConfig().getStringList("lore.random-lore.pools.TOOL");
-            if (toolLores != null && !toolLores.isEmpty()) {
-                availableLores.addAll(toolLores);
-            }
-        } else if (isArmorItem(item.getType())) {
-            List<String> armorLores = plugin.getConfig().getStringList("lore.random-lore.pools.ARMOR");
-            if (armorLores != null && !armorLores.isEmpty()) {
-                availableLores.addAll(armorLores);
-            }
-        }
-        
-        // 如果有可用的随机lore
-        if (!availableLores.isEmpty()) {
-            // 随机选择指定数量的lore
-            Collections.shuffle(availableLores);
-            int actualAmount = Math.min(amount, availableLores.size());
+        // 随机选择Lore，直到达到调整后的目标数量或尝试次数用完
+        while (selectedLores.size() < adjustedTarget && attempts < maxAttempts && !randomLorePool.isEmpty()) {
+            attempts++;
             
-            for (int i = 0; i < actualAmount; i++) {
-                String randomLore = availableLores.get(i);
-                
-                // 处理变量
-                randomLore = randomLore.replace("%ilore_player_name%", player.getName())
-                        .replace("%ilore_material_name%", item.getType().toString());
-                
-                // 处理所有插件变量
-                randomLore = variableProcessor.parseAllVariables(randomLore, player, item);
-                
-                // 处理颜色代码
-                randomLore = colorManager.colorize(randomLore);
-                
-                randomLores.add(randomLore);
+            // 根据权重随机选择
+            double randomValue = random.nextDouble() * totalWeight;
+            double weightSum = 0.0;
+            int selectedIndex = -1;
+            
+            for (int j = 0; j < poolWeights.size(); j++) {
+                weightSum += poolWeights.get(j);
+                if (randomValue <= weightSum) {
+                    selectedIndex = j;
+                    break;
+                }
             }
+            
+            if (selectedIndex == -1 || selectedIndex >= randomLorePool.size()) {
+                continue; // 无效索引，重试
+            }
+            
+            String selectedLore = String.valueOf(randomLorePool.get(selectedIndex).get(0));
+            boolean unique = isUnique.get(selectedIndex);
+            
+            // 检查唯一标记，避免选择多个相同类型的唯一性Lore
+            if (unique) {
+                // 确定唯一性Lore的类型/类别
+                String uniqueCategory = determineUniqueCategory(selectedLore);
+                
+                // 检查是否已存在相同类别的唯一性Lore
+                if (selectedUniqueTypes.contains(uniqueCategory)) {
+                    // 已有相同类别的唯一性Lore，跳过这个
+                    
+                    // 更新总权重
+                    totalWeight -= poolWeights.get(selectedIndex);
+                    
+                    // 移除已尝试的Lore
+                    randomLorePool.remove(selectedIndex);
+                    poolWeights.remove(selectedIndex);
+                    isUnique.remove(selectedIndex);
+                    
+                    continue;
+                }
+                
+                // 将该类别的唯一标记添加到列表
+                selectedUniqueTypes.add(uniqueCategory);
+                
+                // 唯一性Lore计数特殊处理
+                if (!uniqueCountAsRandom) {
+                    // 如果唯一性Lore不计入随机数量，则增加目标数量
+                    adjustedTarget++;
+                }
+                
+                // 记录日志，便于调试
+                if (plugin.getConfig().getBoolean("debug", false)) {
+                    plugin.getLogger().info("选择了唯一性Lore[" + uniqueCategory + "]: " + selectedLore);
+                }
+            }
+            
+            // 处理变量和占位符
+            String processedLore = variableProcessor.parseAllVariables(selectedLore, player, item);
+            String coloredLore = colorManager.colorize(processedLore);
+            
+            // 移除调试标记
+            coloredLore = coloredLore.replaceAll("§r§8\\[[^\\]]+\\]$", "");
+            
+            selectedLores.add(coloredLore);
+            
+            // 更新总权重
+            totalWeight -= poolWeights.get(selectedIndex);
+            
+            // 移除已选择的Lore，避免重复
+            randomLorePool.remove(selectedIndex);
+            poolWeights.remove(selectedIndex);
+            isUnique.remove(selectedIndex);
+        }
+        
+        // 先添加计入随机数量的固定Lore
+        randomLores.addAll(countedFixedLores);
+        
+        // 再添加所有选定的随机Lore
+        randomLores.addAll(selectedLores);
+        
+        // 记录日志，便于调试
+        if (plugin.getConfig().getBoolean("debug", false)) {
+            plugin.getLogger().info("生成的随机Lore总数: " + randomLores.size() + 
+                                    " (固定不计数: " + fixedLores.size() + 
+                                    ", 固定计数: " + countedFixedLores.size() + 
+                                    ", 随机: " + selectedLores.size() + ")");
         }
         
         return randomLores;
@@ -512,10 +822,10 @@ public class LoreManager {
         for (String line : customLores) {
             // 处理变量
             line = variableProcessor.parseAllVariables(line, player, item);
-            
-            // 处理颜色代码
+                
+                // 处理颜色代码
             line = colorManager.colorize(line);
-            
+                
             lore.add(line);
         }
     }
@@ -574,6 +884,40 @@ public class LoreManager {
                name.equals("SHIELD") || name.equals("ELYTRA");
     }
     
+    /**
+     * 确定唯一性Lore的类别
+     * 根据Lore文本内容提取类别信息，用于区分不同种类的唯一性Lore
+     * @param loreText Lore文本内容
+     * @return 唯一性类别标识
+     */
+    private String determineUniqueCategory(String loreText) {
+        // 尝试根据颜色代码和特殊符号后的第一个词来确定类别
+        
+        // 方法1：如果包含冒号，提取冒号前的关键字
+        if (loreText.contains(":")) {
+            String beforeColon = loreText.substring(0, loreText.indexOf(":")).trim();
+            // 寻找最后一个空格，取最后一个词
+            int lastSpaceIndex = beforeColon.lastIndexOf(" ");
+            if (lastSpaceIndex != -1 && lastSpaceIndex < beforeColon.length() - 1) {
+                return beforeColon.substring(lastSpaceIndex + 1);
+            }
+            return beforeColon; // 如果没有空格，返回整个冒号前的内容
+        }
+        
+        // 方法2：按空格分割，找到第一个不是颜色代码的词
+        String[] parts = loreText.split(" ");
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i].trim();
+            if (!part.isEmpty() && !part.startsWith("&") && !part.startsWith("§")) {
+                return part;
+            }
+        }
+        
+        // 如果无法确定特定类别，根据内容生成一个唯一标识
+        // 使用hashCode可以为相同内容生成相同的标识
+        return "UNIQUE_" + Math.abs(loreText.hashCode() % 1000);
+    }
+
     /**
      * 检查物品是否为武器类
      * @param material 物品材质

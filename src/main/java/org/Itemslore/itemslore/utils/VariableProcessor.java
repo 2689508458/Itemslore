@@ -31,7 +31,10 @@ public class VariableProcessor {
      * @return 处理后的文本
      */
     public String parseAllVariables(String text, Player player, ItemStack item) {
-        // 首先尝试使用PlaceholderAPI处理所有变量
+        // 首先处理自定义的ItemsLore插件变量
+        text = parseItemsLoreVariables(text, player, item);
+        
+        // 然后尝试使用PlaceholderAPI处理所有变量
         PluginManager pluginManager = plugin.getPluginManager();
         
         if (pluginManager.isPlaceholderAPIEnabled() && player != null) {
@@ -63,6 +66,66 @@ public class VariableProcessor {
         }
         
         return resultBuilder.toString();
+    }
+    
+    /**
+     * 处理ItemsLore插件的自定义变量
+     * @param text 待处理的文本
+     * @param player 玩家对象
+     * @param item 物品对象
+     * @return 处理后的文本
+     */
+    private String parseItemsLoreVariables(String text, Player player, ItemStack item) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        
+        // 替换与物品相关的变量
+        if (item != null) {
+            text = text.replace("%ilore_material_name%", item.getType().name());
+            text = text.replace("%material_name%", item.getType().name());
+            
+            if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+                text = text.replace("%ilore_item_name%", item.getItemMeta().getDisplayName());
+                text = text.replace("%item_name%", item.getItemMeta().getDisplayName());
+            } else {
+                text = text.replace("%ilore_item_name%", formatMaterialName(item.getType().name()));
+                text = text.replace("%item_name%", formatMaterialName(item.getType().name()));
+            }
+        }
+        
+        // 替换与玩家相关的变量
+        if (player != null) {
+            text = text.replace("%ilore_player%", player.getName());
+            text = text.replace("%ilore_player_name%", player.getName());
+            text = text.replace("%ilore_player_displayname%", player.getDisplayName());
+            
+            // 替换世界相关变量
+            text = text.replace("%ilore_world%", player.getWorld().getName());
+            text = text.replace("%ilore_world_name%", player.getWorld().getName());
+        }
+        
+        return text;
+    }
+    
+    /**
+     * 格式化物品材质名称为更易读的格式
+     * @param materialName 物品材质名
+     * @return 格式化后的名称
+     */
+    private String formatMaterialName(String materialName) {
+        String[] parts = materialName.toLowerCase().split("_");
+        StringBuilder formattedName = new StringBuilder();
+        
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                formattedName.append(part.substring(0, 1).toUpperCase())
+                        .append(part.substring(1))
+                        .append(" ");
+            }
+        }
+        
+        return formattedName.toString().trim();
     }
     
     /**
