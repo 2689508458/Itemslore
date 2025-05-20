@@ -175,11 +175,11 @@ lore:
       global: 100
       # 物品类型特定概率
       types:
-        WEAPON: 80
-        TOOL: 70
-        ARMOR: 75
-        DIAMOND: 90
-        NETHERITE: 95
+        WEAPON: 80 #有20%几率不会生成lore
+        TOOL: 70 #有30%几率不会生成lore
+        ARMOR: 75 #有25%几率不会生成lore
+        DIAMOND: 90 #有10%几率不会生成lore
+        NETHERITE: 95 #有5%几率不会生成lore
     # 每个物品类型对应的随机lore池
     pools:
       # 所有物品都可能获得的随机lore
