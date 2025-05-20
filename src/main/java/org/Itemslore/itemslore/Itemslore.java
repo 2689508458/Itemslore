@@ -42,7 +42,7 @@ public final class Itemslore extends JavaPlugin {
         // 注册命令
         registerCommands();
         
-        getLogger().info("ItemsLore插件已成功启动!");
+        getLogger().info("ItemsLore插件已成功启动!!!");
     }
     
     /**
