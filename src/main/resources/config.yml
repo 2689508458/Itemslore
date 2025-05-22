@@ -18,6 +18,28 @@ item-types:
   - "ARMOR"
   - "WEAPON"
 
+# 已有Lore的物品处理方式
+existing-lore:
+  # 处理模式：
+  # APPEND - 在已有Lore后添加新的Lore（默认）
+  # OVERWRITE - 覆盖已有Lore
+  # IGNORE - 忽略已有Lore的物品（不处理）
+  mode: "APPEND"
+  
+  # 是否在添加新Lore前添加分隔线（仅在APPEND模式下生效）
+  add-separator: true
+  
+  # 分隔线样式（仅在add-separator为true时生效）
+  separator-style: "&8&m· · · · · · · · · · · · · · · · · · · ·"
+  
+  # 检测关键字，如果物品Lore中包含这些关键字，则视为已经被插件处理过
+  # 用于防止重复添加插件Lore
+  detection-keywords:
+    - "&8❖ &7耐久"
+    - "&7获取时间"
+    - "&7获取者"
+    - "&7来源"
+
 # Lore 配置
 lore:
   # 基础模板配置

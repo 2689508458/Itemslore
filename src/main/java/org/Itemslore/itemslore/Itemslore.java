@@ -2,6 +2,7 @@ package org.Itemslore.itemslore;
 
 import org.Itemslore.itemslore.commands.CommandHandler;
 import org.Itemslore.itemslore.commands.CommandTabCompleter;
+import org.Itemslore.itemslore.listeners.AdvancedItemEventListener;
 import org.Itemslore.itemslore.listeners.ItemEventListener;
 import org.Itemslore.itemslore.managers.ConfigManager;
 import org.Itemslore.itemslore.managers.LoreManager;
@@ -72,6 +73,10 @@ public final class Itemslore extends JavaPlugin {
         // 注册物品事件监听器
         getServer().getPluginManager().registerEvents(
                 new ItemEventListener(this, loreManager), this);
+        
+        // 注册高级物品事件监听器
+        getServer().getPluginManager().registerEvents(
+                new AdvancedItemEventListener(this, loreManager), this);
     }
     
     /**
